@@ -1,30 +1,35 @@
-'''pyexplorer
+# Copyright (c) 2023 Seth M. Nelson
 
-MIT License
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
 
-Copyright (c) 2023 Seth M. Nelson
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+'''core functionality for Explore class'''
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-'''
-
-# TODO:
-# __all__ = [...]
+__all__ = [
+    # classes
+    'AttributeDict', 'Explore',
+    
+    # functions
+    'isproperty', 'getdocstring', 'getmembers_categorized',
+    
+    # Helper functions
+    '_getmember_counts', '_flat_members', '_sig_format'
+]
 
 __author__ = ('Seth M. Nelson <github.com/nelsonseth>')
 
@@ -155,11 +160,15 @@ def _getmember_counts(members: dict) -> dict:
 def _flat_members(members: dict) -> list:
     '''Internal helper function.
     
-    Return flattened list of all members.
+    Return flattened list of member tuples... (key, member). 
     '''
     flat = []
-    for row in list(members.values()):
-        flat.extend(row)
+    # for row in list(members.values()):
+    #     flat.extend(row)
+    # return flat
+    for k in list(members.keys()):
+        for v in members[k]:
+            flat.append((k,v))
     return flat
 
 
@@ -186,9 +195,9 @@ def _sig_format(sig_str: str) -> str:
 #------------------------------------------------------------------------------
 
 
-class PyExplorer():
+class Explore():
     
-    '''Class space controlling pyexplorer's options for navigating a given object.'''
+    '''Class space controlling options for navigating a given object.'''
 
     def __init__(self, obj) -> None:
 
@@ -208,13 +217,16 @@ class PyExplorer():
         # grab intial member set of inputed object.
         self._updatemembers()
 
-
+        
     def _checkmember(self, member: str) -> bool:
         '''Internal helper method.
         
         Check if member string is in current member list.
         '''
-        if member not in self._flatmembers:
+        # create simple list of current member names only
+        members = [m[1] for m in self._flatmembers]
+
+        if member not in members:
             raise AttributeError(
                 f"'{member}' is not a member of '{self._trace}'"
             )
@@ -333,20 +345,20 @@ class PyExplorer():
         self._updatemembers()
 
     
-    def getdoc(self, member: str | None = None, inline: bool = False) -> None:
+    def getdoc(self, member: str | None = None, printed: bool = False) -> None:
         '''Return docstring of current object or member of object.'''
         if member and self._checkmember(member):
             obj_str = f'{self._refhistory[-1]}.{member}'
         else:
             obj_str = self._refhistory[-1]
 
-        if inline:
-            return getdocstring(eval(obj_str))
-        else:
+        if printed:
             return print(getdocstring(eval(obj_str)))
+        else:
+            return getdocstring(eval(obj_str))
     
 
-    def getsignature(self, member:str | None = None, inline: bool = False) -> None:
+    def getsignature(self, member:str | None = None, printed: bool = False) -> None:
         '''Return signature of current object or member of object.'''
         if member and self._checkmember(member):
             obj_str = f'{self._refhistory[-1]}.{member}'
@@ -355,17 +367,17 @@ class PyExplorer():
 
         try:
             sig = inspect.signature(eval(obj_str)).__str__()
-            if inline:
-                return _sig_format(sig)
-            else:
-                return print(_sig_format(sig))
-        except TypeError:
-             return 'Object is not callable.'
-
+        except:
+             return 'Signature not available.'
         
-    # These may be an incomplete or improper use of @property since I am not 
-    # explicitly calling out each getter and setter, but it seems to work pretty
-    # well like this.
+        if printed:
+            return print(_sig_format(sig))
+        else:
+            return _sig_format(sig)
+        
+    # Public property calls for current members, membercounts, flatmembers, 
+    # and trace. No setter is defined, thus these can only be written internally
+    # via the class methods. 
 
     @property
     def members(self):
@@ -395,6 +407,7 @@ class PyExplorer():
 
 
 if __name__ == '__main__':
-    import pandas
-    px = PyExplorer(pandas)
+    test = Explore(inspect)
 
+    test.getdoc(printed=True)
+    print(test.membercounts)

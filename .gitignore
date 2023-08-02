@@ -1,6 +1,7 @@
 # custom things
-source/__pycache__/
-testpit/
+src/__pycache__/
+src/core/__pycache__/
+tests/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
