@@ -35,12 +35,10 @@ __author__ = ('Seth M. Nelson <github.com/nelsonseth>')
 
 # The bulk of the heavy lifting here is already covered by inspect.
 import inspect
-
 from warnings import warn
-
+from typing import Union
 
 #------------------------------------------------------------------------------
-
 
 class AttributeDict(dict):
     '''Subclasses dict for some basic dot notation abilities.'''
@@ -67,6 +65,45 @@ def getdocstring(obj) -> str:
         return nodoc
     else:
         return doc
+
+
+_IGNORE = [
+    'False',
+    'None',
+    'True',
+    'and',
+    'as',
+    'assert',
+    'async',
+    'await',
+    'break',
+    'class',
+    'continue',
+    'def',
+    'del',
+    'elif',
+    'else',
+    'except',
+    'finally',
+    'for',
+    'from',
+    'global',
+    'if',
+    'import',
+    'in',
+    'is',
+    'lambda',
+    'nonlocal',
+    'not',
+    'or',
+    'pass',
+    'raise',
+    'return',
+    'try',
+    'while',
+    'with',
+    'yield',
+]
 
 
 def getmembers_categorized(obj) -> dict:
@@ -100,36 +137,39 @@ def getmembers_categorized(obj) -> dict:
     others = []
 
     for name in public_members_names:
-        # eval string built from obj.itemname
-        itemstr = f'{objstr}.{name}'
+        
+        if name not in _IGNORE:
+        
+            # eval string built from obj.itemname
+            itemstr = f'{objstr}.{name}'
 
-        # identify imported modules if obj is module.
-        if inspect.ismodule(eval(itemstr)):
-            modules.append(name)
+            # identify imported modules if obj is module.
+            if inspect.ismodule(eval(itemstr)):
+                modules.append(name)
 
-        # identify any included classes.
-        elif inspect.isclass(eval(itemstr)):
-            classes.append(name)
+            # identify any included classes.
+            elif inspect.isclass(eval(itemstr)):
+                classes.append(name)
 
-        # identify included functions.
-        # The function inspect.isroutine() covers:
-        #   - builtin function types
-        #   - user function types
-        #   - methods
-        #   - method descriptors
-        # NOTE: functions created by user-defined classes are not covered here.
-        # (they just end up in others). Not sure how to deal with that yet.
-        # Example: numpy's ufunc functions. TODO for later.
-        elif inspect.isroutine(eval(itemstr)):
-            functions.append(name)
+            # identify included functions.
+            # The function inspect.isroutine() covers:
+            #   - builtin function types
+            #   - user function types
+            #   - methods
+            #   - method descriptors
+            # NOTE: functions created by user-defined classes are not covered here.
+            # (they just end up in others). Not sure how to deal with that yet.
+            # Example: numpy's ufunc functions. TODO for later.
+            elif inspect.isroutine(eval(itemstr)):
+                functions.append(name)
 
-        # identify any included properties
-        elif isproperty(eval(itemstr)):
-            properties.append(name)
+            # identify any included properties
+            elif isproperty(eval(itemstr)):
+                properties.append(name)
 
-        # bin anything else into 'others' for now.
-        else:
-            others.append(name)
+            # bin anything else into 'others' for now.
+            else:
+                others.append(name)
 
     # Return dictionary of sorted name lists.  
     return AttributeDict(
@@ -184,13 +224,16 @@ def _sig_format(sig_str: str) -> str:
     sig_split = sig_str.split(',')
     
     if 'self' in sig_split[0]:
-        sig_split.pop(0)
-        sig_split[0] = ''.join(['(', sig_split[0][1:]])
-
+        if len(sig_split) > 1:
+            sig_split.pop(0)
+            sig_split[0] = ''.join(['(', sig_split[0][1:]])
+        else:
+            sig_split[0] = sig_split[0].replace('self:', '')
+            
     sig_pretty = ''.join([s+',\n' for s in sig_split])
-
+    
     return sig_pretty[0:-2]
-
+        
 
 #------------------------------------------------------------------------------
 
@@ -283,7 +326,7 @@ class Explore():
 
     def _updatehistory(self, 
                        direction: str,
-                       member: str | None = None,
+                       member: Union[str,None] = None,
                        levels_out: int = 1
                        ) -> None:
         '''Internal helper method.
@@ -345,7 +388,7 @@ class Explore():
         self._updatemembers()
 
     
-    def getdoc(self, member: str | None = None, printed: bool = False) -> None:
+    def getdoc(self, member: Union[str,None] = None, printed: bool = False) -> None:
         '''Return docstring of current object or member of object.'''
         if member and self._checkmember(member):
             obj_str = f'{self._refhistory[-1]}.{member}'
@@ -358,7 +401,7 @@ class Explore():
             return getdocstring(eval(obj_str))
     
 
-    def getsignature(self, member:str | None = None, printed: bool = False) -> None:
+    def getsignature(self, member: Union[str,None] = None, printed: bool = False) -> None:
         '''Return signature of current object or member of object.'''
         if member and self._checkmember(member):
             obj_str = f'{self._refhistory[-1]}.{member}'
@@ -373,7 +416,7 @@ class Explore():
         if printed:
             return print(_sig_format(sig))
         else:
-            return _sig_format(sig)
+            return _sig_format(rf'{sig}')
         
     # Public property calls for current members, membercounts, flatmembers, 
     # and trace. No setter is defined, thus these can only be written internally

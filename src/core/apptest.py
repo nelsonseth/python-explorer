@@ -26,10 +26,16 @@ from dash import (Dash, html, dcc,
 import dash_bootstrap_components as dbc
 import dash_mantine_components as dmc
 
-from explore import Explore
+from explore import Explore, AttributeDict
 
-
-_PRELOADED_PACKAGES = ['numpy', 'scipy', 'matplotlib', 'seaborn', 'pandas', 'dash']
+_PRELOADED_PACKAGES = [
+    'numpy',
+    'scipy',
+    'matplotlib',
+    'seaborn',
+    'pandas',
+    'dash',
+]
 
 app = Dash(
     __name__,
@@ -69,7 +75,7 @@ _button_kwargs = {
     'radius':'md',
 }
 
-def _get_button_list(
+def _get_m_buttons(
     namelist: list,
     color: str
     ) -> list:
@@ -79,6 +85,23 @@ def _get_button_list(
             children = f'{n[1]}',
             id = {'comptype': 'm-button',
                   'group':n[0],
+                  'index':namelist.index(n)},
+            color=color,
+            **_button_kwargs,
+        ) for n in namelist]
+    
+    return buttons
+
+def _get_t_buttons(
+    namelist: list,
+    color: str,
+    ) -> list:
+    
+    buttons = [
+        dmc.Button(
+            children = n,
+            id = {'comptype': 't-button',
+                  #'group':'trace',
                   'index':namelist.index(n)},
             color=color,
             **_button_kwargs,
@@ -150,6 +173,15 @@ _TITLE_SELECT_ROW = dbc.Row(
             ),
             width='auto',
         ),
+        dbc.Col(
+            dmc.Button(
+                'Explore More',
+                id='explore-more',
+                color='green',
+                **_button_kwargs
+            ),
+            width='auto'
+        )
     ],
     justify='start',
     align='start'
@@ -184,20 +216,57 @@ _MEMBER_TABS_STRUCTURE = dbc.Row(
             }
         ),
     ],
-    style={'height':'89%',
+    style={'height':'85%',
             'width':'100%',
             'margin':'auto'},
 )
 
 _TRACE_BREADCRUMBS = dmc.Breadcrumbs(
-    children=[
-        dmc.Button('pandas', **_button_kwargs),
-        dmc.Button('DataFrame', **_button_kwargs),
-        dmc.Button('align', **_button_kwargs),
-    ],
+    children=[],
+    id='trace-breadcrumbs',
     separator='.',
-    p='0.5em'
+    #p='0.5em'
 )
+
+_SEARCH_ROW = dbc.Row([
+    dbc.Col([
+        dmc.TextInput(
+            placeholder='Search Members',
+            type='text',
+            size='sm',
+            id='seach-input',
+        )
+        ],
+    ),
+    dbc.Col([
+        dmc.RadioGroup([
+            dmc.Radio('Contains', value='contains'),
+            dmc.Radio('Starts with', value='startswith')
+            ],
+            value='startswith',
+            orientation='horizontal',
+            size='sm',
+            spacing='xs',
+            id='search-radio',
+        ),
+    ])
+    ],
+    style={
+        'height':'50%'
+    }
+)
+
+_MEMBER_HEADER = dbc.Container([
+    dbc.Row(_TRACE_BREADCRUMBS, style={'height':'50%'}),
+    _SEARCH_ROW,
+    ],
+    style={
+        'height':'100%',
+        'width':'100%',
+        'margin':'auto',
+    }
+)
+
 
 _LAYOUT_BASE = dbc.Container(
     [
@@ -220,12 +289,14 @@ _LAYOUT_BASE = dbc.Container(
                     dmc.Paper(
                         children=[
                             dbc.Row(
-                                _TRACE_BREADCRUMBS,
+                                _MEMBER_HEADER,
                                 style={
-                                    'height':'10%',
+                                    'height':'15%',
                                     'width':'100%',
                                     'margin':'auto'
-                                }
+                                },
+                                align='start',
+                                justify='start',
                             ),
                             dmc.Divider(
                                 orientation='horizontal',
@@ -288,7 +359,7 @@ _LAYOUT_BASE = dbc.Container(
         )
     ],
     style={
-        'height':'99vh',
+        'height':'98vh',
         'width':'100vw',
         'margin':'auto',
     },
@@ -310,7 +381,17 @@ class AppWrap(BaseAppWrap):
         [
             _LAYOUT_BASE,
             dcc.Store(
-                id='m-dict',
+                id='m-data',
+                storage_type='memory',
+                data=[],
+            ),
+            dcc.Store(
+                id='m-filtered-data',
+                storage_type='memory',
+                data=[],
+            ),
+            dcc.Store(
+                id='t-data',
                 storage_type='memory',
                 data=[],
             )
@@ -321,32 +402,58 @@ class AppWrap(BaseAppWrap):
         super().__init__(app=app)
 
         self.explore = Explore
-        self.buttons = []
-
+        self.m_buttons = []
+        self.t_buttons = []
+        self.current = ''
+        self.appState = AttributeDict({
+            'reset':True,
+            'search':True,
+        })
 
     def callbacks(self, app):
 
         @app.callback(
-                Output('m-dict', 'data'),
+                Output('m-data', 'data'),
+                Output('t-data','data'),
                 Input('package-select', 'value'),
+                Input('explore-more', 'n_clicks'),
+                Input({'comptype':'t-button', 'index':ALL}, 'n_clicks'),
+                State('t-data', 'data'),
                 prevent_intial_call=True
         )
-        def initial(module):
+        def set_current(module, n1, n2, trace):
             if module == None or module == 'initialize':
                 return no_update
-            else:
+            
+            id = ctx.triggered_id
+           
+            if id == 'package-select':
                 try:
                     exec(f'import {module}')
                     self.explore = Explore(eval(f'{module}'))
-                    return [self.explore.members, self.explore.flatmembers]
                 except [ImportError, ModuleNotFoundError]:
                     return no_update
+            elif id == 'explore-more':
+                self.explore.stepin(self.current)
+            else:
+                if id.index == (len(trace[0]) - 1):
+                    return no_update
+                
+                levels = len(trace[0]) - id.index - 1
+                self.explore.stepout(levels)
+            
+            self.current = self.explore._history[-1]
+
+            self.appState.reset = True
+
+            return ([self.explore.members, self.explore.flatmembers],
+                                        [self.explore._history])
 
 
         @app.callback(
                 [Output('m-tabs', 'children'),
                  Output('m-tabs-group', 'value')],
-                [Input('m-dict', 'data'),
+                [Input('m-data', 'data'),
                  State('m-tabs-group', 'value')],
                  prevent_intial_call=True
         )
@@ -354,7 +461,7 @@ class AppWrap(BaseAppWrap):
             members = data[0]
             flatmembers = data[1]
 
-            self.buttons = _get_button_list(flatmembers, 'blue')
+            self.m_buttons = _get_m_buttons(flatmembers, 'blue')
 
             return _get_tabs(members), tab
         
@@ -362,7 +469,7 @@ class AppWrap(BaseAppWrap):
         @app.callback(
             Output('m-tabs-content', 'children'),
             Input('m-tabs-group', 'value'),
-            State('m-dict', 'data'),
+            State('m-data', 'data'),
             prevent_intial_call=True
         )
         def get_tab_content(activetab, data):
@@ -375,20 +482,28 @@ class AppWrap(BaseAppWrap):
             for key in keys:
                 if activetab == key:
                     return _get_button_stack(
-                        self.buttons,
+                        self.m_buttons,
                         key,
                         keys.index(key)
                     )
 
 
         @app.callback(
+            Output('trace-breadcrumbs', 'children'),
+            Input('t-data', 'data'),
+        )
+        def set_trace_buttons(data):
+            return _get_t_buttons(data[0], 'red')
+
+
+        @app.callback(
             Output('sig-area', 'children'),
             Output('doc-area', 'children'),
             Input({'comptype':'m-button', 'group':ALL, 'index':ALL}, 'n_clicks'),
-            State('m-dict', 'data'),
+            State('m-data', 'data'),
             prevent_initial_call=True
         )
-        def member_button_click(n, data):
+        def member_button_click(n, data):           
             try:
                 trig_id = ctx.triggered_id.index
             except AttributeError:
@@ -397,7 +512,10 @@ class AppWrap(BaseAppWrap):
             names = [n[1] for n in data[1]]
             name = names[trig_id]
 
-            return rf'{self.explore.getsignature(name)}', fr'{self.explore.getdoc(name)}'
+            self.current = name
+
+            return (dcc.Markdown(self.explore.getsignature(name)),
+                    dcc.Markdown(self.explore.getdoc(name)))
 
 
 appwrapper = AppWrap(app=app)
@@ -406,4 +524,3 @@ app.layout = appwrapper.layout
 
 if __name__ == '__main__':
     app.run(debug=True)
-
