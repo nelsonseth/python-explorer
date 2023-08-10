@@ -25,13 +25,14 @@ from dash import (Dash, html, dcc,
 
 import dash_bootstrap_components as dbc
 import dash_mantine_components as dmc
+from dash_iconify import DashIconify
 
 from explore import Explore, AttributeDict
 
 _PRELOADED_PACKAGES = [
     'numpy',
     'scipy',
-    'matplotlib',
+    'matplotlib.pyplot',
     'seaborn',
     'pandas',
     'dash',
@@ -50,6 +51,7 @@ _paper_kwargs_scroll = {
     'p':'sm',
     'style':{
         'height':'100%',
+        'max-height':'100%',
         'width':'100%',
         'overflow-y':'auto'
     }
@@ -62,6 +64,7 @@ _paper_kwargs_no_scroll = {
     'p':'sm',
     'style':{
         'height':'100%',
+        'max-height':'100%',
         'width':'100%',
         'overflow':'hidden'
     }
@@ -117,17 +120,20 @@ def _get_button_stack(
     
     buttonlist_group = [b for b in buttonlist if b.id['group'] == group]
 
-    bs = dmc.Stack(
-        buttonlist_group,
-        id={
-            'comptype':'m-button-stack',
-            'group':group,
-            'index':stack_int,
-        },
-        align='flex-start',
-        justify='flex-start',
-        spacing='xs',
-    )
+    if len(buttonlist_group) == 0:
+        bs = _placeholder_text(f'No resulting {group}.')
+    else:
+        bs = dmc.Stack(
+            buttonlist_group,
+            id={
+                'comptype':'m-button-stack',
+                'group':group,
+                'index':stack_int,
+            },
+            align='flex-start',
+            justify='flex-start',
+            spacing='xs',
+        )
 
     return bs
 
@@ -149,8 +155,63 @@ def _get_tabs(member_dict: dict) -> list:
 
     return tabs
 
+def _placeholder_text(text):
+    child = dmc.Center([
+        dmc.Text(
+            text,
+            color='dimmed',
+            size='xl'
+        )
+        ],
+        style={'height':'100%', 'width':'100%'}
+    )
+
+    return child
+
+def _get_filtered_dict(flat):
+    modules = []
+    classes = []
+    functions = []
+    properties = []
+    others = []
+
+    for f in flat:
+        if f[0] == 'modules':
+            modules.append(f[1])
+        elif f[0] == 'classes':
+            classes.append(f[1])
+        elif f[0] == 'functions':
+            functions.append(f[1])
+        elif f[0] == 'properties':
+            properties.append(f[1])
+        elif f[0] == 'others':
+            others.append(f[1])
+
+    return AttributeDict(
+        {
+            'modules': sorted(modules),
+            'classes': sorted(classes),
+            'functions': sorted(functions),
+            'properties': sorted(properties),
+            'others': sorted(others)
+        }
+    )
+
+
 _TITLE_SELECT_ROW = dbc.Row(
     [
+        dbc.Col(
+            dmc.Button(
+                id='menu-burger',
+                leftIcon=DashIconify(
+                    icon='iconamoon:menu-burger-horizontal',
+                    width=40,
+                    color='black',
+                ),
+                variant='white',
+            ),
+            width='auto',
+        ),
         dbc.Col(
             dmc.Text(
                 'Python Explorer',
@@ -207,7 +268,9 @@ _MEMBER_TABS_STRUCTURE = dbc.Row(
             width='auto',
         ),
         dbc.Col(
-            children=[],
+            children=[
+                _placeholder_text('Explorer Members')
+            ],
             id='m-tabs-content',
             style={
                 'height':'100%',
@@ -216,13 +279,15 @@ _MEMBER_TABS_STRUCTURE = dbc.Row(
             }
         ),
     ],
-    style={'height':'85%',
+    style={'height':'84%',
             'width':'100%',
             'margin':'auto'},
 )
 
 _TRACE_BREADCRUMBS = dmc.Breadcrumbs(
-    children=[],
+    children=[
+        _placeholder_text('Explorer Trace')
+    ],
     id='trace-breadcrumbs',
     separator='.',
     #p='0.5em'
@@ -231,10 +296,10 @@ _TRACE_BREADCRUMBS = dmc.Breadcrumbs(
 _SEARCH_ROW = dbc.Row([
     dbc.Col([
         dmc.TextInput(
-            placeholder='Search Members',
+            placeholder='Search Current Members',
             type='text',
             size='sm',
-            id='seach-input',
+            id='search-input',
         )
         ],
     ),
@@ -266,7 +331,6 @@ _MEMBER_HEADER = dbc.Container([
         'margin':'auto',
     }
 )
-
 
 _LAYOUT_BASE = dbc.Container(
     [
@@ -317,12 +381,45 @@ _LAYOUT_BASE = dbc.Container(
                 ),
                 dbc.Col(
                     [
-                        dbc.Row(
-                            dmc.Paper(
-                                children=[],
-                                id='sig-area',
-                                **_paper_kwargs_scroll,
-                            ),                          
+                        dbc.Row([
+                            dmc.Paper([
+                                dbc.Row([
+                                    dbc.Col(
+                                        children=[
+                                            _placeholder_text('Current Member'),
+                                        ],
+                                        id='current-member',
+                                        width=4,
+                                        style={
+                                            'height':'100%',
+                                            'max-height':'100%',
+                                            #'overflow':'auto'
+                                        },
+                                    ),
+                                    dbc.Col(
+                                        children=[
+                                            _placeholder_text('Member Signature')
+                                        ],
+                                        id='sig-area',
+                                        width=8,
+                                        style={
+                                            'height':'100%',
+                                            'max-height':'100%',
+                                            'overflow':'auto'
+                                        },
+                                    )
+                                    ],
+                                    class_name='g-0',
+                                    style={
+                                        'height':'100%',
+                                        'width':'100%',
+                                        'margin':'auto',
+                                    },
+                                )
+                                ],
+                                **_paper_kwargs_no_scroll
+                            ),
+                            ],                          
                             style={
                                 'height':'30%',
                                 'width':'100%',
@@ -331,7 +428,9 @@ _LAYOUT_BASE = dbc.Container(
                         ),
                         dbc.Row(                           
                             dmc.Paper(
-                                children=[],
+                                children=[
+                                    _placeholder_text('Member Docstring')
+                                ],
                                 id='doc-area',
                                 **_paper_kwargs_scroll,                           
                             ),
@@ -366,6 +465,33 @@ _LAYOUT_BASE = dbc.Container(
     fluid=True,
 )
 
+_LAYOUT_STORES = html.Div([
+    dcc.Store(
+        id='m-data',
+        storage_type='memory',
+        data=[],
+    ),
+    dcc.Store(
+        id='m-filtered-data',
+        storage_type='memory',
+        data=[],
+    ),
+    dcc.Store(
+        id='t-data',
+        storage_type='memory',
+        data=[],
+    )
+])
+
+_LAYOUT_DRAWER = dmc.Drawer(
+    children=[],
+    id='menu-drawer',
+    closeOnClickOutside=True,
+    closeOnEscape=True,
+    size='30vw'
+)
+
+
 # Based on https://github.com/plotly/dash/issues/61 thread discussion on
 # potential use of classes with dash.
 class BaseAppWrap():
@@ -380,21 +506,8 @@ class AppWrap(BaseAppWrap):
     layout = html.Div(
         [
             _LAYOUT_BASE,
-            dcc.Store(
-                id='m-data',
-                storage_type='memory',
-                data=[],
-            ),
-            dcc.Store(
-                id='m-filtered-data',
-                storage_type='memory',
-                data=[],
-            ),
-            dcc.Store(
-                id='t-data',
-                storage_type='memory',
-                data=[],
-            )
+            _LAYOUT_DRAWER,
+            _LAYOUT_STORES,
         ]
     )
 
@@ -403,18 +516,23 @@ class AppWrap(BaseAppWrap):
 
         self.explore = Explore
         self.m_buttons = []
-        self.t_buttons = []
         self.current = ''
-        self.appState = AttributeDict({
-            'reset':True,
-            'search':True,
-        })
 
     def callbacks(self, app):
 
         @app.callback(
+                Output('menu-drawer', 'opened'),
+                Input('menu-burger', 'n_clicks'),
+                prevent_initial_call=True,
+        )
+        def drawer_control(open):
+            return True
+
+
+        @app.callback(
                 Output('m-data', 'data'),
                 Output('t-data','data'),
+                Output('search-input', 'value'),
                 Input('package-select', 'value'),
                 Input('explore-more', 'n_clicks'),
                 Input({'comptype':'t-button', 'index':ALL}, 'n_clicks'),
@@ -444,22 +562,51 @@ class AppWrap(BaseAppWrap):
             
             self.current = self.explore._history[-1]
 
-            self.appState.reset = True
-
             return ([self.explore.members, self.explore.flatmembers],
-                                        [self.explore._history])
+                    [self.explore._history],
+                    '')
 
 
         @app.callback(
-                [Output('m-tabs', 'children'),
-                 Output('m-tabs-group', 'value')],
-                [Input('m-data', 'data'),
-                 State('m-tabs-group', 'value')],
-                 prevent_intial_call=True
+                Output('m-filtered-data', 'data'),
+                Input('m-data', 'data'),
+                Input('search-input', 'value'),
+                Input('search-radio', 'value'),
+                prevent_initial_call=True
+        )
+        def set_filtered_data(data, value, choice):
+        
+            if value == '':
+                return data
+            else:
+                filtered_flat = []
+                if choice == 'contains':
+                    for flat in data[1]:
+                        if value.lower() in flat[1].lower():
+                            filtered_flat.append(flat)
+                elif choice == 'startswith':
+                    for flat in data[1]:
+                        if flat[1].lower().startswith(value):
+                            filtered_flat.append(flat)
+
+                filtered_dict = _get_filtered_dict(filtered_flat)
+
+                return [filtered_dict, filtered_flat]
+
+
+        @app.callback(
+                Output('m-tabs', 'children'),
+                Output('m-tabs-group', 'value'),
+                Input('m-filtered-data', 'data'),
+                State('m-tabs-group', 'value'),
+                prevent_intial_call=True
         )
         def create_tabs(data, tab):
-            members = data[0]
-            flatmembers = data[1]
+            try:
+                members = data[0]
+                flatmembers = data[1]
+            except:
+                return no_update
 
             self.m_buttons = _get_m_buttons(flatmembers, 'blue')
 
@@ -469,7 +616,7 @@ class AppWrap(BaseAppWrap):
         @app.callback(
             Output('m-tabs-content', 'children'),
             Input('m-tabs-group', 'value'),
-            State('m-data', 'data'),
+            State('m-filtered-data', 'data'),
             prevent_intial_call=True
         )
         def get_tab_content(activetab, data):
@@ -499,23 +646,56 @@ class AppWrap(BaseAppWrap):
         @app.callback(
             Output('sig-area', 'children'),
             Output('doc-area', 'children'),
+            Output('current-member', 'children'),
             Input({'comptype':'m-button', 'group':ALL, 'index':ALL}, 'n_clicks'),
-            State('m-data', 'data'),
+            Input({'comptype':'t-button', 'index':ALL}, 'n_clicks'),
+            State('t-data', 'data'),
+            State('m-filtered-data', 'data'),
             prevent_initial_call=True
         )
-        def member_button_click(n, data):           
+        def sig_doc_output(n1, n2, t_data, m_data):           
             try:
-                trig_id = ctx.triggered_id.index
-            except AttributeError:
+                button = ctx.triggered_id.comptype
+            except:
                 return no_update
-            
-            names = [n[1] for n in data[1]]
-            name = names[trig_id]
 
-            self.current = name
+            if button == 't-button':
+                trace = t_data[0]
 
-            return (dcc.Markdown(self.explore.getsignature(name)),
-                    dcc.Markdown(self.explore.getdoc(name)))
+                self.current = trace[-1]
+
+                return (self.explore.getsignature(),
+                        self.explore.getdoc(),
+                        dmc.Text(self.explore.trace, align='center')
+                    )
+
+            elif button == 'm-button':
+
+                if len(m_data[1]) == 0:
+                    return (_placeholder_text('Member Signature'),
+                            _placeholder_text('Member Docstring'))
+                
+                if all(n==0 for n in n1):
+                    return no_update
+
+                try:
+                    trig_id = ctx.triggered_id.index
+                except AttributeError:
+                    return (_placeholder_text('Member Signature'),
+                            _placeholder_text('Member Docstring'))
+                
+
+                names = [n[1] for n in m_data[1]]
+                name = names[trig_id]
+
+                self.current = name
+
+                current_trace = '.'.join([self.explore.trace, name])
+
+                return (dcc.Markdown(self.explore.getsignature(name)),
+                        dcc.Markdown(self.explore.getdoc(name)),
+                        dmc.Text(current_trace, align='center')
+                    )
 
 
 appwrapper = AppWrap(app=app)
