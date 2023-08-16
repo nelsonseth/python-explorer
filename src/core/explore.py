@@ -123,12 +123,12 @@ def getmembers_categorized(obj) -> dict:
     # Gather members from __all__ or inspection.
     # Ignoring and removing all dunders (__vars__ and _vars) for now. These 
     # do not serve a purpose in my current vision of this tool.
-    try:
-        public_members_names = [m for m in obj.__all__ if not m.startswith('_')]
-    except AttributeError:
-        public_members = [m for m in inspect.getmembers(obj) 
-                      if not m[0].startswith('_')]
-        public_members_names = [m[0] for m in public_members]
+    # try:
+    #     public_members_names = [m for m in obj.__all__ if not m.startswith('_')]
+    # except AttributeError:
+    public_members = [m for m in inspect.getmembers(obj) 
+                    if not m[0].startswith('_')]
+    public_members_names = [m[0] for m in public_members]
 
     modules = []
     classes = []
@@ -138,6 +138,9 @@ def getmembers_categorized(obj) -> dict:
 
     for name in public_members_names:
         
+        # ignore any programmatical ref words (True, for, if, not,... etc.)
+        # I don't know the actual name for these items, but they won't work as
+        # a member object. 
         if name not in _IGNORE:
         
             # eval string built from obj.itemname
@@ -219,8 +222,8 @@ def _sig_format(sig_str: str) -> str:
     Formats string output from inspect.signature.__str__
     '''
 
-    # this split by ',' also splits a parameter's listing of options if there
-    # is one resulting in a weird output. TODO for later.
+    # this split by ',' also splits a parameter's listing of options, if there
+    # are any, resulting in a weird output. TODO for later.
     sig_split = sig_str.split(',')
     
     if 'self' in sig_split[0]:
@@ -229,8 +232,10 @@ def _sig_format(sig_str: str) -> str:
             sig_split[0] = ''.join(['(', sig_split[0][1:]])
         else:
             sig_split[0] = sig_split[0].replace('self:', '')
-            
-    sig_pretty = ''.join([s+',\n' for s in sig_split])
+
+    # NOTE: two whitespaces required before \n for markdown to properly parse
+    # new line.        
+    sig_pretty = ''.join([s+',  \n' for s in sig_split])
     
     return sig_pretty[0:-2]
         
@@ -416,7 +421,7 @@ class Explore():
         if printed:
             return print(_sig_format(sig))
         else:
-            return _sig_format(rf'{sig}')
+            return _sig_format(sig)
         
     # Public property calls for current members, membercounts, flatmembers, 
     # and trace. No setter is defined, thus these can only be written internally

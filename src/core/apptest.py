@@ -26,6 +26,10 @@ from dash import (Dash, html, dcc,
 import dash_bootstrap_components as dbc
 import dash_mantine_components as dmc
 from dash_iconify import DashIconify
+from dash_extensions import Purify
+
+from markdown import markdown
+from pypandoc import convert_text
 
 from explore import Explore, AttributeDict
 
@@ -36,6 +40,11 @@ _PRELOADED_PACKAGES = [
     'seaborn',
     'pandas',
     'dash',
+    'dash_extensions',
+    'markdown',
+    'pypandoc',
+    'fluids',
+    'importlib'
 ]
 
 app = Dash(
@@ -197,6 +206,22 @@ def _get_filtered_dict(flat):
         }
     )
 
+def _publish_sig(sig: str) -> Purify:
+    sig_html = convert_text(sig,
+                            format='md',
+                            to='html5',
+                            )
+    return Purify(sig_html)
+
+def _publish_doc(doc: str) -> Purify:
+    doc_html = convert_text(doc,
+                            format='rst',
+                            to='html5',
+                            extra_args=[
+                                    '--webtex',
+                                ],
+                            )
+    return Purify(doc_html)
 
 _TITLE_SELECT_ROW = dbc.Row(
     [
@@ -389,11 +414,11 @@ _LAYOUT_BASE = dbc.Container(
                                             _placeholder_text('Current Member'),
                                         ],
                                         id='current-member',
-                                        width=4,
+                                        width=6,
                                         style={
                                             'height':'100%',
                                             'max-height':'100%',
-                                            #'overflow':'auto'
+                                            'overflow':'auto'
                                         },
                                     ),
                                     dbc.Col(
@@ -401,7 +426,7 @@ _LAYOUT_BASE = dbc.Container(
                                             _placeholder_text('Member Signature')
                                         ],
                                         id='sig-area',
-                                        width=8,
+                                        width=6,
                                         style={
                                             'height':'100%',
                                             'max-height':'100%',
@@ -551,8 +576,10 @@ class AppWrap(BaseAppWrap):
                     self.explore = Explore(eval(f'{module}'))
                 except [ImportError, ModuleNotFoundError]:
                     return no_update
+                
             elif id == 'explore-more':
                 self.explore.stepin(self.current)
+
             else:
                 if id.index == (len(trace[0]) - 1):
                     return no_update
@@ -654,26 +681,31 @@ class AppWrap(BaseAppWrap):
             prevent_initial_call=True
         )
         def sig_doc_output(n1, n2, t_data, m_data):           
+            
             try:
                 button = ctx.triggered_id.comptype
             except:
                 return no_update
 
             if button == 't-button':
+
                 trace = t_data[0]
 
                 self.current = trace[-1]
 
-                return (self.explore.getsignature(),
-                        self.explore.getdoc(),
-                        dmc.Text(self.explore.trace, align='center')
-                    )
+                return (_publish_sig(self.explore.getsignature()),
+                        _publish_doc(self.explore.getdoc()),
+                        [dmc.Text(self.explore.trace, align='center'),
+                         dmc.Text(f'mb:{n1}   tb:{n2}'),
+                         dmc.Text(str(ctx.triggered_id))]
+                         )
 
-            elif button == 'm-button':
+            elif button == 'm-button': 
 
                 if len(m_data[1]) == 0:
                     return (_placeholder_text('Member Signature'),
-                            _placeholder_text('Member Docstring'))
+                            _placeholder_text('Member Docstring'),
+                            _placeholder_text('Current Member'))
                 
                 if all(n==0 for n in n1):
                     return no_update
@@ -682,9 +714,9 @@ class AppWrap(BaseAppWrap):
                     trig_id = ctx.triggered_id.index
                 except AttributeError:
                     return (_placeholder_text('Member Signature'),
-                            _placeholder_text('Member Docstring'))
+                            _placeholder_text('Member Docstring'),
+                            _placeholder_text('Current Member'))
                 
-
                 names = [n[1] for n in m_data[1]]
                 name = names[trig_id]
 
@@ -692,11 +724,13 @@ class AppWrap(BaseAppWrap):
 
                 current_trace = '.'.join([self.explore.trace, name])
 
-                return (dcc.Markdown(self.explore.getsignature(name)),
-                        dcc.Markdown(self.explore.getdoc(name)),
-                        dmc.Text(current_trace, align='center')
-                    )
-
+                return (_publish_sig(self.explore.getsignature(name)),
+                        _publish_doc(self.explore.getdoc(name)),
+                        [dmc.Text(current_trace, align='center'),
+                         dmc.Text(f'mb:{n1}   tb:{n2}'),
+                         dmc.Text(str(ctx.triggered_id))]
+                         )
+            
 
 appwrapper = AppWrap(app=app)
 
