@@ -18,20 +18,29 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import os
+import sys
 
 from dash import (Dash, html, dcc,
                   callback, Input, Output, State,
                   MATCH, ALL, ctx, no_update)
+from dash.exceptions import PreventUpdate
 
 import dash_bootstrap_components as dbc
 import dash_mantine_components as dmc
 from dash_iconify import DashIconify
 from dash_extensions import Purify
+from dash_extensions.enrich import DashProxy
+
 
 from markdown import markdown
 from pypandoc import convert_text
 
 from explore import Explore, AttributeDict
+
+bi_data = open(rf'{sys.path[0]}\data\3_9.txt', 'rt').read()
+bi_list = [n for n in bi_data.splitlines()]
+
 
 _PRELOADED_PACKAGES = [
     'numpy',
@@ -47,7 +56,7 @@ _PRELOADED_PACKAGES = [
     'importlib'
 ]
 
-app = Dash(
+app = DashProxy(
     __name__,
     external_stylesheets=[dbc.themes.BOOTSTRAP,
                    ],
@@ -254,7 +263,7 @@ _TITLE_SELECT_ROW = dbc.Row(
                 id='package-select',
                 value='initialize',
                 dropdownPosition='bottom',
-                data=_PRELOADED_PACKAGES,
+                data=bi_list,
                 size='sm',
             ),
             width='auto',
@@ -418,7 +427,8 @@ _LAYOUT_BASE = dbc.Container(
                                         style={
                                             'height':'100%',
                                             'max-height':'100%',
-                                            'overflow':'auto'
+                                            'overflow':'auto',
+                                            'border-right':'2px dashed gray'
                                         },
                                     ),
                                     dbc.Col(
@@ -434,7 +444,7 @@ _LAYOUT_BASE = dbc.Container(
                                         },
                                     )
                                     ],
-                                    class_name='g-0',
+                                    #class_name='g-0',
                                     style={
                                         'height':'100%',
                                         'width':'100%',
@@ -505,6 +515,11 @@ _LAYOUT_STORES = html.Div([
         id='t-data',
         storage_type='memory',
         data=[],
+    ),
+    dcc.Store(
+        id='notification-data',
+        storage_type='memory',
+        data=[]
     )
 ])
 
@@ -528,13 +543,19 @@ class BaseAppWrap():
 
 class AppWrap(BaseAppWrap):
     
-    layout = html.Div(
-        [
-            _LAYOUT_BASE,
-            _LAYOUT_DRAWER,
-            _LAYOUT_STORES,
-        ]
+    layout = dmc.NotificationsProvider(
+        html.Div(
+            [
+                html.Div(id='notification-container'),
+                _LAYOUT_BASE,
+                _LAYOUT_DRAWER,
+                _LAYOUT_STORES,
+            ]
+        ),
+        position='top-right',
+        autoClose=2000,
     )
+    
 
     def __init__(self, app):
         super().__init__(app=app)
@@ -542,9 +563,29 @@ class AppWrap(BaseAppWrap):
         self.explore = Explore
         self.m_buttons = []
         self.current = ''
+        self.clickstate = ''
 
     def callbacks(self, app):
 
+        @app.callback(
+                Output('notification-container', 'children'),
+                Input('notification-data', 'data'),
+                prevent_initial_call=True,
+        )
+        def error_notify(data):
+            try:
+                data[0]
+            except:
+                return no_update
+            
+            return dmc.Notification(
+                title=data[0],
+                message=data[1],
+                id='notifier',
+                action='show'
+            )
+        
+        
         @app.callback(
                 Output('menu-drawer', 'opened'),
                 Input('menu-burger', 'n_clicks'),
@@ -558,6 +599,7 @@ class AppWrap(BaseAppWrap):
                 Output('m-data', 'data'),
                 Output('t-data','data'),
                 Output('search-input', 'value'),
+                Output('notification-data', 'data'),
                 Input('package-select', 'value'),
                 Input('explore-more', 'n_clicks'),
                 Input({'comptype':'t-button', 'index':ALL}, 'n_clicks'),
@@ -565,33 +607,61 @@ class AppWrap(BaseAppWrap):
                 prevent_intial_call=True
         )
         def set_current(module, n1, n2, trace):
-            if module == None or module == 'initialize':
-                return no_update
             
+            nada = (no_update, no_update, '', no_update)
+            error = no_update
+            
+            if module == None or module == 'initialize':
+                return nada
+
             id = ctx.triggered_id
            
             if id == 'package-select':
                 try:
                     exec(f'import {module}')
                     self.explore = Explore(eval(f'{module}'))
+                    self.clickstate = 'package'
                 except [ImportError, ModuleNotFoundError]:
-                    return no_update
+                    return nada
                 
             elif id == 'explore-more':
-                self.explore.stepin(self.current)
+                self.clickstate = 'explore'
+                flag = self.explore.stepin(self.current)
+                if flag == 0:
+                    pass
+                elif flag == 1:
+                    error = [
+                        'Exploration Complete.',
+                        f'No further members to explore in {self.current}'
+                    ]
+                elif flag == 2:
+                    error = [
+                        'Exploration Error.',
+                        f'{self.current} is not a valid member.'
+                    ]
 
             else:
+
+                self.clickstate = 'trace'
+
+                if all(n==0 for n in n2):
+                    return nada
+
                 if id.index == (len(trace[0]) - 1):
-                    return no_update
+                    return (no_update,
+                        [self.explore._history],
+                        '',
+                        error)
                 
                 levels = len(trace[0]) - id.index - 1
                 self.explore.stepout(levels)
-            
+                
             self.current = self.explore._history[-1]
 
             return ([self.explore.members, self.explore.flatmembers],
                     [self.explore._history],
-                    '')
+                    '',
+                    error)
 
 
         @app.callback(
@@ -633,7 +703,7 @@ class AppWrap(BaseAppWrap):
                 members = data[0]
                 flatmembers = data[1]
             except:
-                return no_update
+                return (no_update, no_update)
 
             self.m_buttons = _get_m_buttons(flatmembers, 'blue')
 
@@ -675,41 +745,50 @@ class AppWrap(BaseAppWrap):
             Output('doc-area', 'children'),
             Output('current-member', 'children'),
             Input({'comptype':'m-button', 'group':ALL, 'index':ALL}, 'n_clicks'),
-            Input({'comptype':'t-button', 'index':ALL}, 'n_clicks'),
+            #Input({'comptype':'t-button', 'index':ALL}, 'n_clicks'),
             State('t-data', 'data'),
             State('m-filtered-data', 'data'),
             prevent_initial_call=True
         )
-        def sig_doc_output(n1, n2, t_data, m_data):           
+        def sig_doc_output(n1, t_data, m_data):           
             
-            try:
-                button = ctx.triggered_id.comptype
-            except:
-                return no_update
+            # try:
+            #     button = ctx.triggered_id.comptype
+            # except:
+            #     return no_update
 
-            if button == 't-button':
+            # if ctx.triggered_id == 't-data':
 
-                trace = t_data[0]
+            #     trace = t_data[0]
 
-                self.current = trace[-1]
+            #     self.current = trace[-1]
 
-                return (_publish_sig(self.explore.getsignature()),
-                        _publish_doc(self.explore.getdoc()),
-                        [dmc.Text(self.explore.trace, align='center'),
-                         dmc.Text(f'mb:{n1}   tb:{n2}'),
-                         dmc.Text(str(ctx.triggered_id))]
-                         )
+            #     return (_publish_sig(self.explore.getsignature()),
+            #             _publish_doc(self.explore.getdoc()),
+            #             dmc.Text(self.explore.trace, align='center'))
 
-            elif button == 'm-button': 
+            # #elif button == 'm-button': 
+            # else:
 
                 if len(m_data[1]) == 0:
                     return (_placeholder_text('Member Signature'),
                             _placeholder_text('Member Docstring'),
                             _placeholder_text('Current Member'))
                 
+                
                 if all(n==0 for n in n1):
-                    return no_update
+                    if self.clickstate in ['package', 'explore', 'trace']:
+                        trace = t_data[0]
 
+                        self.current = trace[-1]
+
+                        return (_publish_sig(self.explore.getsignature()),
+                                _publish_doc(self.explore.getdoc()),
+                                dmc.Text(self.explore.trace, align='center'))
+                    else:
+                        return (no_update, no_update, no_update)
+                
+                #if self.clickstate == 'member':
                 try:
                     trig_id = ctx.triggered_id.index
                 except AttributeError:
@@ -724,12 +803,11 @@ class AppWrap(BaseAppWrap):
 
                 current_trace = '.'.join([self.explore.trace, name])
 
+                self.clickstate = 'member'
+
                 return (_publish_sig(self.explore.getsignature(name)),
                         _publish_doc(self.explore.getdoc(name)),
-                        [dmc.Text(current_trace, align='center'),
-                         dmc.Text(f'mb:{n1}   tb:{n2}'),
-                         dmc.Text(str(ctx.triggered_id))]
-                         )
+                        dmc.Text(current_trace, align='center'))
             
 
 appwrapper = AppWrap(app=app)

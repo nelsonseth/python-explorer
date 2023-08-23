@@ -293,7 +293,7 @@ class Explore():
             return 'root'
         
 
-    def _updatemembers(self) -> None:
+    def _updatemembers(self) -> int:
         '''Internal helper method.
         
         Update current member listing for target object exploration.
@@ -318,7 +318,11 @@ class Explore():
                 # recursive return to previous
                 self._updatehistory('out')
                 self._updatemembers()
+
+                return 1 # no members flag
         
+            return 0 # no flag
+
         except AttributeError:
             # again, simple warning for now if member retrieval failed.
             # TODO figure out better message for dash interface
@@ -327,6 +331,8 @@ class Explore():
             # recursive return to previous.
             self._updatehistory('out')
             self._updatemembers()
+
+            return 2 # invalid member flag
            
 
     def _updatehistory(self, 
@@ -379,7 +385,7 @@ class Explore():
 
         self._updatehistory('in', member)
 
-        self._updatemembers()
+        return self._updatemembers()
 
     
     def stepout(self, levels: int = 1) -> None:
@@ -387,10 +393,11 @@ class Explore():
         
         Optional levels (int) input for stepping back multiple trace levels.
         '''
-
-        self._updatehistory('out', levels_out=levels)
-
-        self._updatemembers()
+        if levels==0:
+            pass
+        else:
+            self._updatehistory('out', levels_out=levels)
+            self._updatemembers()
 
     
     def getdoc(self, member: Union[str,None] = None, printed: bool = False) -> None:
