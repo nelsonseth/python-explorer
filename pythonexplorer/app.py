@@ -32,14 +32,12 @@ from dash_iconify import DashIconify
 from dash_extensions import Purify
 from dash_extensions.enrich import DashProxy
 
-
-from markdown import markdown
 from pypandoc import convert_text
 
 from explore import Explore, AttributeDict
 
 bi_data = open(rf'{sys.path[0]}\data\3_9.txt', 'rt').read()
-bi_list = [n for n in bi_data.splitlines()]
+bi_list = [('standards', n) for n in bi_data.splitlines()]
 
 
 _PRELOADED_PACKAGES = [
@@ -56,14 +54,9 @@ _PRELOADED_PACKAGES = [
     'importlib'
 ]
 
-app = DashProxy(
-    __name__,
-    external_stylesheets=[dbc.themes.BOOTSTRAP,
-                   ],
-    title='Python Explorer')
-
+# common kwargs for dmc.Paper with scroll
 _paper_kwargs_scroll = {
-    'radius':'xs',
+    'radius':'sm',
     'withBorder':True,
     'shadow':'lg',
     'p':'sm',
@@ -71,12 +64,13 @@ _paper_kwargs_scroll = {
         'height':'100%',
         'max-height':'100%',
         'width':'100%',
-        'overflow-y':'auto'
+        'overflow':'auto'
     }
 }
 
+# common kwargs for dmc.Paper with no scroll
 _paper_kwargs_no_scroll = {
-    'radius':'xs',
+    'radius':'sm',
     'withBorder':True,
     'shadow':'lg',
     'p':'sm',
@@ -88,6 +82,7 @@ _paper_kwargs_no_scroll = {
     }
 }
 
+# common kwargs for dmc.Button components
 _button_kwargs = {
     'n_clicks':0,
     'size':'sm',
@@ -96,104 +91,136 @@ _button_kwargs = {
     'radius':'md',
 }
 
-def _get_m_buttons(
+# Helper Functions-------------------------------------------------------------
+
+def _comp_id(comptype: str, group: str, index: int) -> dict:
+    '''Return component id dict containing comptype, group, and index.'''
+    # I found it easier to have every comp id be of the same form.
+    return {
+        'comptype':comptype,
+        'group':group,
+        'index':index,
+    }
+
+
+def _get_p_buttons(
     namelist: list,
     color: str
     ) -> list:
+    '''Return list of buttons for packages.
     
-    buttons = [
+    * namelist - flattened list of (group, package) tuples
+    * color - color of buttons
+    '''
+    return [
         dmc.Button(
-            children = f'{n[1]}',
-            id = {'comptype': 'm-button',
-                  'group':n[0],
-                  'index':namelist.index(n)},
+            children = n[1],
+            id = _comp_id('p-button', n[0], namelist.index(n)),
             color=color,
             **_button_kwargs,
-        ) for n in namelist]
-    
-    return buttons
+        ) for n in namelist
+    ]
+
 
 def _get_t_buttons(
     namelist: list,
     color: str,
     ) -> list:
+    '''Return list of buttons for trace.
     
-    buttons = [
+    * namelist - list of strings (from trace history)
+    * color - color of button
+    '''
+    return [
         dmc.Button(
             children = n,
-            id = {'comptype': 't-button',
-                  #'group':'trace',
-                  'index':namelist.index(n)},
+            id = _comp_id('t-button', 'trace', namelist.index(n)),
             color=color,
             **_button_kwargs,
-        ) for n in namelist]
+        ) for n in namelist
+    ]    
+
+
+def _get_m_buttons(
+    namelist: list,
+    color: str
+    ) -> list:
+    '''Return list of buttons for members.
     
-    return buttons
+    * namelist - flattened list of (key, member) tuples
+    * color - color of button
+    '''
+    return [
+        dmc.Button(
+            children = n[1],
+            id = _comp_id('m-button', n[0], namelist.index(n)),
+            color=color,
+            **_button_kwargs,
+        ) for n in namelist
+    ]
+
 
 def _get_button_stack(
     buttonlist: list,
     group: str,
-    stack_int: int,
-    ) -> list:
+    ) -> (dmc.Center | dmc.Stack):
+    '''Return stack of buttons for respective layout content.
     
+    * buttonlist - list of button components
+    * group - str corresponding to button id.group
+    '''
     buttonlist_group = [b for b in buttonlist if b.id['group'] == group]
 
+    # if no members for a given tab, return placeholder text
     if len(buttonlist_group) == 0:
-        bs = _placeholder_text(f'No resulting {group}.')
+        return _placeholder_text(f'No resulting {group}.')
     else:
-        bs = dmc.Stack(
-            buttonlist_group,
-            id={
-                'comptype':'m-button-stack',
-                'group':group,
-                'index':stack_int,
-            },
+        return dmc.Stack(
+            children = buttonlist_group,
             align='flex-start',
             justify='flex-start',
             spacing='xs',
         )
 
-    return bs
 
 def _get_tabs(member_dict: dict) -> list:
-    
+    '''Return list of Tab components for current member stats.'''
     keys = list(member_dict.keys())
     tabs = []
     for key in keys:
         num = len(member_dict[key])
         tabs.append(dmc.Tab(
-            f'{str.title(key)} ({num})',
+            children = f'{str.title(key)} ({num})',
             value = key,
-            id = {
-                'comptype':'tab',
-                'group':key,
-                'index':keys.index(key),
-            },
+            id = _comp_id(f'{key}-tab', 'tabs', keys.index(key))
         ))
-
     return tabs
 
-def _placeholder_text(text):
-    child = dmc.Center([
-        dmc.Text(
-            text,
-            color='dimmed',
-            size='xl'
-        )
-        ],
-        style={'height':'100%', 'width':'100%'}
+
+def _placeholder_text(text: str) -> dmc.Center:
+    '''Return simple centered text for blank layout areas.'''
+    return dmc.Center(
+        children = dmc.Text(text, color='dimmed', size='xl'),
+        style={
+            'height':'100%',
+            'width':'100%',
+            'margin':'auto',
+        },
     )
 
-    return child
 
-def _get_filtered_dict(flat):
+def _get_filtered_dict(filtered_flat: list) -> AttributeDict:
+    '''Return dict of members from flattened list of filtered members.
+    
+    * filtered_flat - list of (key, member) tuples
+    '''
     modules = []
     classes = []
     functions = []
     properties = []
     others = []
 
-    for f in flat:
+    for f in filtered_flat:
         if f[0] == 'modules':
             modules.append(f[1])
         elif f[0] == 'classes':
@@ -215,14 +242,18 @@ def _get_filtered_dict(flat):
         }
     )
 
-def _publish_sig(sig: str) -> Purify:
+
+def _publish_signature(sig: str) -> Purify:
+    '''Return Purify component for signature string.'''
     sig_html = convert_text(sig,
                             format='md',
                             to='html5',
                             )
     return Purify(sig_html)
 
-def _publish_doc(doc: str) -> Purify:
+
+def _publish_docstring(doc: str) -> Purify:
+    '''Return Purify component for docstring.'''
     doc_html = convert_text(doc,
                             format='rst',
                             to='html5',
@@ -232,164 +263,273 @@ def _publish_doc(doc: str) -> Purify:
                             )
     return Purify(doc_html)
 
-_TITLE_SELECT_ROW = dbc.Row(
-    [
-        dbc.Col(
-            dmc.Button(
-                id='menu-burger',
-                leftIcon=DashIconify(
-                    icon='iconamoon:menu-burger-horizontal',
-                    width=40,
-                    color='black',
-                ),
-                variant='white',
+
+_TITLE_ROW_CONTENT = dbc.Stack(
+    children=[
+        dmc.ActionIcon(
+            children=DashIconify(
+                icon='iconamoon:menu-burger-horizontal',
+                width=40,
+                color='blue',
             ),
-            width='auto',
+            variant='light',
+            id=_comp_id('menu-button', 'menu', 0),
+            size='lg',
         ),
-        dbc.Col(
+        dmc.Text(
             dmc.Text(
-                'Python Explorer',
-                style={
-                    'font-size':'1.5em',
-                    'font-weight':'700',
-                    'align':'center'
-                },
-            ),
-            width='auto'
+            'Python Explorer',
+            style={
+                'font-size':'1.5em',
+                'font-weight':'700',
+                'align':'center'
+            },
         ),
-        dbc.Col(
-            dmc.Select(
-                placeholder='Select package to explore.',
-                id='package-select',
-                value='initialize',
-                dropdownPosition='bottom',
-                data=bi_list,
-                size='sm',
-            ),
-            width='auto',
         ),
-        dbc.Col(
-            dmc.Button(
-                'Explore More',
-                id='explore-more',
-                color='green',
-                **_button_kwargs
-            ),
-            width='auto'
+        dmc.Button(
+            'Explore More',
+            id=_comp_id('explore-button', 'tabs', 0),
+            color='green',
+            **_button_kwargs
         )
     ],
-    justify='start',
-    align='start'
+    direction='horizontal',
+    gap=2,
 )
 
-_MEMBER_TABS_STRUCTURE = dbc.Row(
-    [   
-        dbc.Col(
-            dmc.Tabs(
-                [
+# _TITLE_SELECT_ROW = dbc.Row(
+#     [
+#         dbc.Col(
+#             dmc.Button(
+#                 id=_comp_id('menu-button', 'menu', 0),
+#                 leftIcon=DashIconify(
+#                     icon='iconamoon:menu-burger-horizontal',
+#                     width=40,
+#                     color='black',
+#                 ),
+#                 variant='white',
+#             ),
+#             width='auto',
+#         ),
+#         dbc.Col(
+#             dmc.Text(
+#                 'Python Explorer',
+#                 style={
+#                     'font-size':'1.5em',
+#                     'font-weight':'700',
+#                     'align':'center'
+#                 },
+#             ),
+#             width='auto'
+#         ),
+#         dbc.Col(
+#             dmc.Select(
+#                 placeholder='Select package to explore.',
+#                 id='package-select',
+#                 value='initialize',
+#                 dropdownPosition='bottom',
+#                 data=bi_list,
+#                 size='sm',
+#             ),
+#             width='auto',
+#         ),
+#         dbc.Col(
+#             dmc.Button(
+#                 'Explore More',
+#                 id={'comptype':'e-button'},
+#                 color='green',
+#                 **_button_kwargs
+#             ),
+#             width='auto'
+#         )
+#     ],
+#     justify='start',
+#     align='start'
+# )
+
+_MEMBER_TABS = dbc.Container(
+    [
+        dbc.Row([   
+            dbc.Col(
+                dmc.Tabs(
                     dmc.TabsList(
                         children=[],
-                        id='m-tabs',
+                        id=_comp_id('m-tabs', 'tabs', 0),
                         grow=True,
                     ),
-                ],
-                id='m-tabs-group',
-                value='modules',
-                variant='default',
-                color='blue',
-                orientation='vertical',
+                    id=_comp_id('m-tabs-group', 'tabs', 0),
+                    value='modules',
+                    variant='default',
+                    color='blue',
+                    orientation='vertical',
+                ),
+                width='auto',
             ),
-            width='auto',
-        ),
-        dbc.Col(
-            children=[
-                _placeholder_text('Explorer Members')
+            dbc.Col(
+                children=[
+                    _placeholder_text('Explorer Members')
+                ],
+                id=_comp_id('m-tabs-content', 'tabs', 0),
+                style={
+                    'height':'100%',
+                    'max-height':'100%',
+                    'overflow':'auto'
+                }
+            ),
+        ],
+        style={
+            'height':'100%',
+            'width':'100%',
+            'margin':'auto'
+            },
+        )
+    ],
+    style={
+        'height':'100%'
+    },
+    fluid=True,
+)
+
+
+_MEMBER_HEADER = dbc.Container(
+    [
+        dbc.Row([
+            dbc.Col([
+                dmc.Breadcrumbs(
+                children=[
+                    _placeholder_text('Explorer Trace')
+                ],
+                id=_comp_id('t-breadcrumbs','trace', 0),
+                separator='.',
+                ),
+            ])
             ],
-            id='m-tabs-content',
+            align='center',
             style={
-                'height':'100%',
-                'max-height':'100%',
-                'overflow':'auto'
+                'height':'50%',
+                'width':'100%',
+                'margin':'auto',
             }
         ),
-    ],
-    style={'height':'84%',
-            'width':'100%',
-            'margin':'auto'},
-)
-
-_TRACE_BREADCRUMBS = dmc.Breadcrumbs(
-    children=[
-        _placeholder_text('Explorer Trace')
-    ],
-    id='trace-breadcrumbs',
-    separator='.',
-    #p='0.5em'
-)
-
-_SEARCH_ROW = dbc.Row([
-    dbc.Col([
-        dmc.TextInput(
-            placeholder='Search Current Members',
-            type='text',
-            size='sm',
-            id='search-input',
-        )
-        ],
-    ),
-    dbc.Col([
-        dmc.RadioGroup([
-            dmc.Radio('Contains', value='contains'),
-            dmc.Radio('Starts with', value='startswith')
-            ],
-            value='startswith',
-            orientation='horizontal',
-            size='sm',
-            spacing='xs',
-            id='search-radio',
-        ),
-    ])
-    ],
-    style={
-        'height':'50%'
-    }
-)
-
-_MEMBER_HEADER = dbc.Container([
-    dbc.Row(_TRACE_BREADCRUMBS, style={'height':'50%'}),
-    _SEARCH_ROW,
-    ],
-    style={
-        'height':'100%',
-        'width':'100%',
-        'margin':'auto',
-    }
-)
-
-_LAYOUT_BASE = dbc.Container(
-    [
-        dbc.Row(
-            #dbc.Col(
-                dmc.Paper(
-                    children=[_TITLE_SELECT_ROW],
-                    **_paper_kwargs_scroll,
+        dbc.Row([
+            dbc.Col([
+                dmc.TextInput(
+                    placeholder='Search Current Members',
+                    type='text',
+                    size='sm',
+                    id=_comp_id('search-input', 'search', 0),
+                )
+                ],
+                align='center'
+            ),
+            dbc.Col([
+                dmc.RadioGroup([
+                    dmc.Radio('Contains', value='contains'),
+                    dmc.Radio('Starts with', value='startswith')
+                    ],
+                    value='startswith',
+                    orientation='horizontal',
+                    size='sm',
+                    spacing='xs',
+                    id=_comp_id('search-radio', 'search', 0),
                 ),
-            #),
+                ],
+                align='center',
+            )
+            ],
             style={
-                'height':'8%',
+                'height':'50%',
+                'width':'100%',
+                'margin':'auto',
+            }
+        )
+    ],
+    fluid=True,
+)
+
+_MEMBER_HEADER2 = dbc.Container(
+    [
+        dbc.Stack([
+            dbc.Row([
+                dmc.Breadcrumbs(
+                children=[
+                    _placeholder_text('Explorer Trace')
+                ],
+                id=_comp_id('t-breadcrumbs','trace', 0),
+                separator='.',
+                ),
+                ]
+            ),
+            dbc.Row([
+                dbc.Col([
+                    dmc.TextInput(
+                        placeholder='Search Current Members',
+                        type='text',
+                        size='sm',
+                        id=_comp_id('search-input', 'search', 0),
+                    )
+                    ],
+                    align='center'
+                ),
+                dbc.Col([
+                    dmc.RadioGroup([
+                        dmc.Radio('Contains', value='contains'),
+                        dmc.Radio('Starts with', value='startswith')
+                        ],
+                        value='startswith',
+                        orientation='horizontal',
+                        size='sm',
+                        spacing='xs',
+                        id=_comp_id('search-radio', 'search', 0),
+                    ),
+                    ],
+                    align='center',
+                )
+                ],
+            )
+            ],
+            direction='vertical',
+            gap=2,
+        ),
+    ],
+    fluid=True,
+)
+
+_page_container_height = '98vh'
+_page_container_width = '100vw'
+
+_title_row_height = '8%'
+_body_row_height = '92%'
+
+_member_header_height = '12%'
+_member_tabs_height = '85%'
+
+_signature_row_height = '30%'
+_docstring_row_height = '70%'
+
+
+_LAYOUT_MAIN = dbc.Container(
+    [
+        # Menu / Title Row
+        dbc.Row(
+            children=_TITLE_ROW_CONTENT,
+            style={
+                'height':_title_row_height,
                 'width':'100%',
                 'margin':'auto',
             },
         ),
+        # Body Row
         dbc.Row(
             [
+                # Member tabs column 
                 dbc.Col(
                     dmc.Paper(
                         children=[
                             dbc.Row(
-                                _MEMBER_HEADER,
+                                _MEMBER_HEADER2,
                                 style={
-                                    'height':'15%',
+                                    'height':_member_header_height,
                                     'width':'100%',
                                     'margin':'auto'
                                 },
@@ -402,19 +542,27 @@ _LAYOUT_BASE = dbc.Container(
                                 style={'width':'100%'}
                             ),
                             dmc.Space(h=3),
-                            _MEMBER_TABS_STRUCTURE
+                            dbc.Row(
+                                _MEMBER_TABS,
+                                style={
+                                    'height':_member_tabs_height,
+                                    'width':'100%',
+                                    'margin':'auto',
+                                }
+                            )
                         ],
                         **_paper_kwargs_no_scroll,
                     ),
                     width=4,
                     style={
                         'height':'100%',
-                        #'width':'30%',
                         'margin':'auto',
                     },
                 ),
+                # Member information column
                 dbc.Col(
                     [
+                        # signature / member info row
                         dbc.Row([
                             dmc.Paper([
                                 dbc.Row([
@@ -422,7 +570,7 @@ _LAYOUT_BASE = dbc.Container(
                                         children=[
                                             _placeholder_text('Current Member'),
                                         ],
-                                        id='current-member',
+                                        id=_comp_id('current-member', 'tabs', 0),
                                         width=6,
                                         style={
                                             'height':'100%',
@@ -435,7 +583,7 @@ _LAYOUT_BASE = dbc.Container(
                                         children=[
                                             _placeholder_text('Member Signature')
                                         ],
-                                        id='sig-area',
+                                        id=_comp_id('sig-info', 'tabs', 0),
                                         width=6,
                                         style={
                                             'height':'100%',
@@ -456,21 +604,22 @@ _LAYOUT_BASE = dbc.Container(
                             ),
                             ],                          
                             style={
-                                'height':'30%',
+                                'height':_signature_row_height,
                                 'width':'100%',
                                 'margin':'auto',
                             },
                         ),
+                        # member docstring row
                         dbc.Row(                           
                             dmc.Paper(
                                 children=[
                                     _placeholder_text('Member Docstring')
                                 ],
-                                id='doc-area',
+                                id=_comp_id('doc-info', 'tabs', 0),
                                 **_paper_kwargs_scroll,                           
                             ),
                             style={
-                                'height':'70%',
+                                'height':_docstring_row_height,
                                 'width':'100%',
                                 'margin':'auto',
                             },
@@ -479,22 +628,21 @@ _LAYOUT_BASE = dbc.Container(
                     width=8,
                     style={
                         'height':'100%',
-                        #'width':'70%',
                         'margin':'auto',
                     },
                 ),
             ],
             class_name='g-0',
             style={
-                'height':'92%',
+                'height':_body_row_height,
                 'width':'100%',
                 'margin':'auto',
             },
         )
     ],
     style={
-        'height':'98vh',
-        'width':'100vw',
+        'height':_page_container_height,
+        'width':_page_container_width,
         'margin':'auto',
     },
     fluid=True,
@@ -502,33 +650,58 @@ _LAYOUT_BASE = dbc.Container(
 
 _LAYOUT_STORES = html.Div([
     dcc.Store(
-        id='m-data',
+        id=_comp_id('m-data', 'tabs', 0),
         storage_type='memory',
         data=[],
     ),
     dcc.Store(
-        id='m-filtered-data',
+        id=_comp_id('m-filtered-data', 'tabs', 0),
         storage_type='memory',
         data=[],
     ),
     dcc.Store(
-        id='t-data',
+        id=_comp_id('t-data', 'trace', 0),
         storage_type='memory',
         data=[],
     ),
     dcc.Store(
-        id='notification-data',
+        id=_comp_id('notify-data', 'notify', 0),
         storage_type='memory',
         data=[]
     )
 ])
 
 _LAYOUT_DRAWER = dmc.Drawer(
-    children=[],
-    id='menu-drawer',
+    children=[
+        dmc.Paper(
+            children=[
+                _get_button_stack(
+                    buttonlist=_get_p_buttons(
+                        bi_list,
+                        'green'
+                    ),
+                    group='standards',
+                )
+            ],
+            #**_paper_kwargs_scroll,
+            style={
+                'height':'90vh',
+                'max-height':'90vh',
+                'width':'100%',
+                'margin':'auto',
+                'overflow':'auto',
+            }
+        )
+    ],
+    id=_comp_id('drawer', 'drawer', 0),
     closeOnClickOutside=True,
     closeOnEscape=True,
-    size='30vw'
+    size='30vw',
+    style={
+        'height':'95vh',
+        'overflow':'hidden',
+        'margin':'auto',
+    }
 )
 
 
@@ -546,8 +719,8 @@ class AppWrap(BaseAppWrap):
     layout = dmc.NotificationsProvider(
         html.Div(
             [
-                html.Div(id='notification-container'),
-                _LAYOUT_BASE,
+                html.Div(id=_comp_id('notifier', 'notify', 0)),
+                _LAYOUT_MAIN,
                 _LAYOUT_DRAWER,
                 _LAYOUT_STORES,
             ]
@@ -562,14 +735,15 @@ class AppWrap(BaseAppWrap):
 
         self.explore = Explore
         self.m_buttons = []
+        self.packagelist = bi_list
         self.current = ''
         self.clickstate = ''
 
     def callbacks(self, app):
 
         @app.callback(
-                Output('notification-container', 'children'),
-                Input('notification-data', 'data'),
+                Output(_comp_id('notifier', 'notify', 0), 'children'),
+                Input(_comp_id('notify-data', 'notify', 0), 'data'),
                 prevent_initial_call=True,
         )
         def error_notify(data):
@@ -587,36 +761,47 @@ class AppWrap(BaseAppWrap):
         
         
         @app.callback(
-                Output('menu-drawer', 'opened'),
-                Input('menu-burger', 'n_clicks'),
+                Output(_comp_id('drawer', 'drawer', 0), 'opened'),
+                Input(_comp_id('menu-button', 'menu', 0), 'n_clicks'),
+                Input(_comp_id('p-button', ALL, ALL), 'n_clicks'),
                 prevent_initial_call=True,
         )
-        def drawer_control(open):
-            return True
+        def drawer_control(open, n1):
+            id = ctx.triggered_id.comptype
+
+            if id == 'menu-button':
+                return True
+            elif id == 'p-button':
+                return False
 
 
         @app.callback(
-                Output('m-data', 'data'),
-                Output('t-data','data'),
-                Output('search-input', 'value'),
-                Output('notification-data', 'data'),
-                Input('package-select', 'value'),
-                Input('explore-more', 'n_clicks'),
-                Input({'comptype':'t-button', 'index':ALL}, 'n_clicks'),
-                State('t-data', 'data'),
+                Output(_comp_id('m-data', 'tabs', 0), 'data'),
+                Output(_comp_id('t-data', 'trace', 0),'data'),
+                Output(_comp_id('search-input', 'search', 0), 'value'),
+                Output(_comp_id('notify-data', 'notify', 0), 'data'),
+                Input(_comp_id('p-button', ALL, ALL), 'n_clicks'),
+                Input(_comp_id('explore-button', 'tabs', 0), 'n_clicks'),
+                Input(_comp_id('t-button', 'trace', ALL), 'n_clicks'),
+                State(_comp_id('t-data', 'trace', 0), 'data'),
                 prevent_intial_call=True
         )
-        def set_current(module, n1, n2, trace):
+        def set_current(pn, en, tn, trace):
             
             nada = (no_update, no_update, '', no_update)
             error = no_update
             
-            if module == None or module == 'initialize':
+            try:
+                comptype = ctx.triggered_id.comptype
+                index = ctx.triggered_id.index
+            except:
                 return nada
-
-            id = ctx.triggered_id
            
-            if id == 'package-select':
+            if comptype == 'p-button':
+                
+                pkgs = [p[1] for p in self.packagelist]
+                module = pkgs[index]
+
                 try:
                     exec(f'import {module}')
                     self.explore = Explore(eval(f'{module}'))
@@ -624,7 +809,7 @@ class AppWrap(BaseAppWrap):
                 except [ImportError, ModuleNotFoundError]:
                     return nada
                 
-            elif id == 'explore-more':
+            elif comptype == 'explore-button':
                 self.clickstate = 'explore'
                 flag = self.explore.stepin(self.current)
                 if flag == 0:
@@ -634,26 +819,27 @@ class AppWrap(BaseAppWrap):
                         'Exploration Complete.',
                         f'No further members to explore in {self.current}'
                     ]
+                    return (no_update, no_update, no_update, error)
                 elif flag == 2:
                     error = [
                         'Exploration Error.',
                         f'{self.current} is not a valid member.'
                     ]
-
-            else:
+                    return (no_update, no_update, no_update, error)
+            elif comptype == 't-button':
 
                 self.clickstate = 'trace'
 
-                if all(n==0 for n in n2):
+                if all(n==0 for n in tn):
                     return nada
 
-                if id.index == (len(trace[0]) - 1):
+                if index == (len(trace[0]) - 1):
                     return (no_update,
                         [self.explore._history],
                         '',
                         error)
                 
-                levels = len(trace[0]) - id.index - 1
+                levels = len(trace[0]) - index - 1
                 self.explore.stepout(levels)
                 
             self.current = self.explore._history[-1]
@@ -665,10 +851,10 @@ class AppWrap(BaseAppWrap):
 
 
         @app.callback(
-                Output('m-filtered-data', 'data'),
-                Input('m-data', 'data'),
-                Input('search-input', 'value'),
-                Input('search-radio', 'value'),
+                Output(_comp_id('m-filtered-data', 'tabs', 0), 'data'),
+                Input(_comp_id('m-data', 'tabs', 0), 'data'),
+                Input(_comp_id('search-input', 'search', 0), 'value'),
+                Input(_comp_id('search-radio', 'search', 0), 'value'),
                 prevent_initial_call=True
         )
         def set_filtered_data(data, value, choice):
@@ -692,10 +878,10 @@ class AppWrap(BaseAppWrap):
 
 
         @app.callback(
-                Output('m-tabs', 'children'),
-                Output('m-tabs-group', 'value'),
-                Input('m-filtered-data', 'data'),
-                State('m-tabs-group', 'value'),
+                Output(_comp_id('m-tabs', 'tabs', 0), 'children'),
+                Output(_comp_id('m-tabs-group', 'tabs', 0), 'value'),
+                Input(_comp_id('m-filtered-data', 'tabs', 0), 'data'),
+                State(_comp_id('m-tabs-group', 'tabs', 0), 'value'),
                 prevent_intial_call=True
         )
         def create_tabs(data, tab):
@@ -711,9 +897,9 @@ class AppWrap(BaseAppWrap):
         
 
         @app.callback(
-            Output('m-tabs-content', 'children'),
-            Input('m-tabs-group', 'value'),
-            State('m-filtered-data', 'data'),
+            Output(_comp_id('m-tabs-content', 'tabs', 0), 'children'),
+            Input(_comp_id('m-tabs-group', 'tabs', 0), 'value'),
+            State(_comp_id('m-filtered-data', 'tabs', 0), 'data'),
             prevent_intial_call=True
         )
         def get_tab_content(activetab, data):
@@ -722,93 +908,80 @@ class AppWrap(BaseAppWrap):
             except:
                 return no_update
             
-            keys = list(members.keys())
-            for key in keys:
-                if activetab == key:
-                    return _get_button_stack(
-                        self.m_buttons,
-                        key,
-                        keys.index(key)
-                    )
+            # keys = list(members.keys())
+            # for key in keys:
+            #     if activetab == key:
+            return _get_button_stack(
+                buttonlist = self.m_buttons,
+                group = activetab
+            )
 
 
         @app.callback(
-            Output('trace-breadcrumbs', 'children'),
-            Input('t-data', 'data'),
+            Output(_comp_id('t-breadcrumbs', 'trace', 0), 'children'),
+            Input(_comp_id('t-data', 'trace', 0), 'data'),
         )
         def set_trace_buttons(data):
             return _get_t_buttons(data[0], 'red')
 
 
         @app.callback(
-            Output('sig-area', 'children'),
-            Output('doc-area', 'children'),
-            Output('current-member', 'children'),
-            Input({'comptype':'m-button', 'group':ALL, 'index':ALL}, 'n_clicks'),
-            #Input({'comptype':'t-button', 'index':ALL}, 'n_clicks'),
-            State('t-data', 'data'),
-            State('m-filtered-data', 'data'),
+            Output(_comp_id('sig-info', 'tabs', 0), 'children'),
+            Output(_comp_id('doc-info', 'tabs', 0), 'children'),
+            Output(_comp_id('current-member', 'tabs', 0), 'children'),
+            Input(_comp_id('m-button', ALL, ALL), 'n_clicks'),
+            State(_comp_id('t-data', 'trace', 0), 'data'),
+            State(_comp_id('m-filtered-data', 'tabs', 0), 'data'),
             prevent_initial_call=True
         )
         def sig_doc_output(n1, t_data, m_data):           
             
-            # try:
-            #     button = ctx.triggered_id.comptype
-            # except:
-            #     return no_update
-
-            # if ctx.triggered_id == 't-data':
-
-            #     trace = t_data[0]
-
-            #     self.current = trace[-1]
-
-            #     return (_publish_sig(self.explore.getsignature()),
-            #             _publish_doc(self.explore.getdoc()),
-            #             dmc.Text(self.explore.trace, align='center'))
-
-            # #elif button == 'm-button': 
-            # else:
-
-                if len(m_data[1]) == 0:
-                    return (_placeholder_text('Member Signature'),
-                            _placeholder_text('Member Docstring'),
-                            _placeholder_text('Current Member'))
-                
-                
-                if all(n==0 for n in n1):
-                    if self.clickstate in ['package', 'explore', 'trace']:
-                        trace = t_data[0]
-
-                        self.current = trace[-1]
-
-                        return (_publish_sig(self.explore.getsignature()),
-                                _publish_doc(self.explore.getdoc()),
-                                dmc.Text(self.explore.trace, align='center'))
-                    else:
-                        return (no_update, no_update, no_update)
-                
-                #if self.clickstate == 'member':
-                try:
-                    trig_id = ctx.triggered_id.index
-                except AttributeError:
-                    return (_placeholder_text('Member Signature'),
-                            _placeholder_text('Member Docstring'),
-                            _placeholder_text('Current Member'))
-                
-                names = [n[1] for n in m_data[1]]
-                name = names[trig_id]
-
-                self.current = name
-
-                current_trace = '.'.join([self.explore.trace, name])
-
-                self.clickstate = 'member'
-
-                return (_publish_sig(self.explore.getsignature(name)),
-                        _publish_doc(self.explore.getdoc(name)),
-                        dmc.Text(current_trace, align='center'))
+            if len(m_data[1]) == 0:
+                return (_placeholder_text('Member Signature'),
+                        _placeholder_text('Member Docstring'),
+                        _placeholder_text('Current Member'))
             
+            
+            if all(n==0 for n in n1):
+                if self.clickstate in ['package', 'explore', 'trace']:
+                    trace = t_data[0]
+
+                    self.current = trace[-1]
+
+                    return (_publish_signature(self.explore.getsignature()),
+                            _publish_docstring(self.explore.getdoc()),
+                            dmc.Text(self.explore.trace, align='center'))
+                else:
+                    return (no_update, no_update, no_update)
+            
+            try:
+                trig_id = ctx.triggered_id.index
+            except AttributeError:
+                return (_placeholder_text('Member Signature'),
+                        _placeholder_text('Member Docstring'),
+                        _placeholder_text('Current Member'))
+            
+            names = [n[1] for n in m_data[1]]
+            name = names[trig_id]
+
+            self.current = name
+
+            current_trace = '.'.join([self.explore.trace, name])
+
+            self.clickstate = 'member'
+
+            return (_publish_signature(self.explore.getsignature(name)),
+                    _publish_docstring(self.explore.getdoc(name)),
+                    dmc.Text(current_trace, align='center'))
+
+
+# APP--------------------------------------------------------------------------
+
+app = DashProxy(
+    __name__,
+    external_stylesheets=[dbc.themes.BOOTSTRAP,
+                   ],
+    title='Python Explorer')       
 
 appwrapper = AppWrap(app=app)
 
