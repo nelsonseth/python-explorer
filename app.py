@@ -35,9 +35,9 @@ from explore import Explore, AttributeDict
 
 
 # Grab packages listing from text files----------------------------------------
-_standards_path = Path(__file__).parent.parent/'static'/'standards_310.txt'
-_commons_path = Path(__file__).parent.parent/'static'/'common_packs.txt'
-_apppacks_path = Path(__file__).parent.parent/'static'/'app_packs.txt'
+_standards_path = Path(__file__).parent/'static'/'standards_310.txt'
+_commons_path = Path(__file__).parent/'static'/'common_packs.txt'
+_apppacks_path = Path(__file__).parent/'static'/'app_packs.txt'
 
 _standards = open(_standards_path).read()
 _standards_list = [('standards', n) for n in _standards.splitlines()]
