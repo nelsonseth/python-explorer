@@ -57,6 +57,7 @@ def isproperty(obj) -> bool:
 
 # Again, inspect is doing the heavy lifting here. Just wanted to still return 
 # a string if no doc found.
+# Update: no longer used... returning None is more useful
 def getdocstring(obj) -> str:
     '''Return object docstring, if possible.'''
     doc = inspect.getdoc(obj)
@@ -408,12 +409,12 @@ class Explore():
             obj_str = self._refhistory[-1]
 
         if printed:
-            return print(getdocstring(eval(obj_str)))
+            return print(inspect.getdoc(eval(obj_str)))
         else:
-            return getdocstring(eval(obj_str))
+            return inspect.getdoc(eval(obj_str))
     
 
-    def getsignature(self, member: Union[str,None] = None, printed: bool = False) -> None:
+    def getsignature(self, member: Union[str,None] = None, printed: bool = False) -> (str | None):
         '''Return signature of current object or member of object.'''
         if member and self._checkmember(member):
             obj_str = f'{self._refhistory[-1]}.{member}'
@@ -423,12 +424,32 @@ class Explore():
         try:
             sig = inspect.signature(eval(obj_str)).__str__()
         except:
-             return 'Signature not available.'
+             #return 'No signature available.'
+             return None
         
         if printed:
             return print(_sig_format(sig))
         else:
             return _sig_format(sig)
+        
+
+    def gettype(self, member: Union[str,None] = None, printed: bool = False) -> (str | None):
+        '''Return type of current object or member of object.'''
+        if member and self._checkmember(member):
+            obj_str = f'{self._refhistory[-1]}.{member}'
+        else:
+            obj_str = self._refhistory[-1]
+
+        try:
+            member_type = type(eval(obj_str)).__name__
+        except:
+             #return 'No signature available.'
+             return None
+        
+        if printed:
+            return print(member_type)
+        else:
+            return member_type
         
     # Public property calls for current members, membercounts, flatmembers, 
     # and trace. No setter is defined, thus these can only be written internally

@@ -1,6 +1,5 @@
 abc
 aifc
-and
 argparse
 array
 ast
@@ -15,7 +14,6 @@ binascii
 binhex
 bisect
 builtins
-bytes
 bz2
 calendar
 cgi
@@ -35,7 +33,7 @@ contextlib
 contextvars
 copy
 copyreg
-crypt
+cProfile
 csv
 ctypes
 curses
@@ -43,12 +41,12 @@ dataclasses
 datetime
 dbm
 decimal
-dict
 difflib
 dis
 distutils
 doctest
 email
+encodings
 ensurepip
 enum
 errno
@@ -57,8 +55,6 @@ fcntl
 filecmp
 fileinput
 fnmatch
-formatter
-fractions
 ftplib
 functools
 gc
@@ -74,19 +70,19 @@ heapq
 hmac
 html
 http
+idlelib
 imaplib
 imghdr
 imp
 importlib
 inspect
-int
 io
 ipaddress
 itertools
 json
 keyword
+lib2to3
 linecache
-list
 locale
 logging
 lzma
@@ -108,7 +104,6 @@ operator
 optparse
 os
 ossaudiodev
-parser
 pathlib
 pdb
 pickle
@@ -120,6 +115,8 @@ plistlib
 poplib
 posix
 pprint
+profile
+pstats
 pty
 pwd
 py_compile
@@ -138,7 +135,6 @@ sched
 secrets
 select
 selectors
-set
 shelve
 shlex
 shutil
@@ -154,13 +150,11 @@ sqlite3
 ssl
 stat
 statistics
-str
 string
 stringprep
 struct
 subprocess
 sunau
-symbol
 symtable
 sys
 sysconfig
@@ -200,7 +194,6 @@ winsound
 wsgiref
 xdrlib
 xml
-xmlrpc
 zipapp
 zipfile
 zipimport

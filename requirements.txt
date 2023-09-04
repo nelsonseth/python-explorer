@@ -1,0 +1,16 @@
+dash
+dash_mantine_components
+dash_bootstrap_components
+dash_iconify
+dash_extensions
+pypandoc_binary
+keras
+matplotlib
+nltk
+numpy
+pandas
+requests
+scipy
+seaborn
+scikit-learn
+tensorflow
