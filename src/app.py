@@ -18,7 +18,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import sys
+from pathlib import Path
 
 from dash import (Dash, html, dcc,
                   callback, Input, Output, State,
@@ -35,20 +35,23 @@ from explore import Explore, AttributeDict
 
 
 # Grab packages listing from text files----------------------------------------
+_standards_path = Path(__file__).parent.parent/'static'/'standards_310.txt'
+_commons_path = Path(__file__).parent.parent/'static'/'common_packs.txt'
+_apppacks_path = Path(__file__).parent.parent/'static'/'app_packs.txt'
 
-standards = open(rf'{sys.path[0]}\standards_310.txt', 'rt').read()
-standards_list = [('standards', n) for n in standards.splitlines()]
+_standards = open(_standards_path).read()
+_standards_list = [('standards', n) for n in _standards.splitlines()]
 
-commons = open(rf'{sys.path[0]}\common_packs.txt', 'rt').read()
-commons_list = [('commons', n) for n in commons.splitlines()]
+_commons = open(_commons_path).read()
+_commons_list = [('commons', n) for n in _commons.splitlines()]
 
-app_packs = open(rf'{sys.path[0]}\app_packs.txt', 'rt').read()
-app_list = [('app_packs', n) for n in app_packs.splitlines()]
+_app_packs = open(_apppacks_path).read()
+_app_list = [('app_packs', n) for n in _app_packs.splitlines()]
 
-all_packages = []
-all_packages.extend(standards_list)
-all_packages.extend(commons_list)
-all_packages.extend(app_list)
+_all_packages = []
+_all_packages.extend(_standards_list)
+_all_packages.extend(_commons_list)
+_all_packages.extend(_app_list)
 
 
 # Common component kwargs------------------------------------------------------
@@ -296,35 +299,48 @@ _EXPLORE_BUTTON = dmc.Button(
             **_button_kwargs
         )
 
-_TITLE_ROW_CONTENT = dbc.Stack(
-    children=[
-        dmc.ActionIcon(
-            children=DashIconify(
-                icon='iconamoon:menu-burger-horizontal',
-                width=40,
-                color='black',
-            ),
-            variant='light',
-            id=_comp_id('menu-button', 'menu', 0),
-            size='lg',
+_TITLE_ROW_CONTENT = dmc.Group(
+    [
+        dmc.Group(
+            children=[
+                dmc.ActionIcon(
+                    children=DashIconify(
+                        icon='iconamoon:menu-burger-horizontal',
+                        width=40,
+                        color='black',
+                    ),
+                    variant='light',
+                    id=_comp_id('menu-button', 'menu', 0),
+                    size='lg',
+                    style={
+                        'background-color':'#eaffed'
+                    }
+                ),
+                dmc.Space(h=5),
+                dmc.Text(
+                    'Python Explorer',
+                    style={
+                        'font-size':'1.5em',
+                        'font-weight':'700',
+                        'align':'center'
+                    },
+                ),
+            ],
+            position='left',
+        ),
+        dmc.NavLink(
+            icon=DashIconify(icon='devicon:github', width=40),
+            href='https://github.com/nelsonseth/python-explorer',
+            variant = 'subtle',
             style={
-                'background-color':'#eaffed'
-            }
-        ),
-        dmc.Text(
-            dmc.Text(
-            'Python Explorer',
-            style={
-                'font-size':'1.5em',
-                'font-weight':'700',
-                'align':'center'
-            },
-        ),
-        ),
+                'width':'50px',
+                'background-color':'#eaffed'}
+        )
     ],
-    direction='horizontal',
-    gap=2,
+    position='apart',
 )
+
+
 
 _MEMBER_TABS = dbc.Container(
     [
@@ -678,7 +694,7 @@ _LAYOUT_STORES = html.Div([
     )
 ])
 
-_package_buttons = _get_p_buttons(all_packages, 'green')
+_package_buttons = _get_p_buttons(_all_packages, 'green')
 
 _DRAWER_CONTENT = dmc.Accordion(
     children=[
@@ -803,7 +819,7 @@ class AppWrap(BaseAppWrap):
 
         self.explore = Explore
         self.m_buttons = []
-        self.packages = [p[1] for p in all_packages]
+        self.packages = [p[1] for p in _all_packages]
         self.current = ''
         self.clickstate = ''
 
@@ -1060,7 +1076,9 @@ app = Dash(
     __name__,
     external_stylesheets=[dbc.themes.BOOTSTRAP,
                    ],
-    title='Python Explorer')       
+    title='Python Explorer')  
+
+server = app.server     
 
 appwrapper = AppWrap(app=app)
 
