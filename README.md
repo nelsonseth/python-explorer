@@ -4,6 +4,8 @@ Developmental build of an experimental python object exploration tool and interf
 
 Beta version currently deployed via Render here: [python-explorer](https://python-explorer.onrender.com/)
 
+EDIT: turns out the free version in Render shuts down after 15 min.... still figuring out options to deploy this as a simple experiment.
+
 Summary
 -------
 This idea stems from my own curiousity about existing python packages both as a beginner and as someone who tends to want to know why something is the way that it is. When presented with new packages, we generally have two options to learn about them... read the docs or explore the raw code. This tool is intended to live somewhere in the middle of those two options. This will definitely not be a replacement for the docs, nor will it give you all the information possible by going to the source code. 
