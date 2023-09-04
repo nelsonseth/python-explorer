@@ -2,9 +2,9 @@
 
 Developmental build of an experimental python object exploration tool and interface.
 
-Beta version currently deployed via Render here: [python-explorer](https://python-explorer.onrender.com/)
+Built with python using [Dash](https://dash.plotly.com) and deployed with [rendor](https://render.com).
 
-EDIT: turns out the free version in Render shuts down after 15 min.... still figuring out options to deploy this as a simple experiment.
+Beta version can be accessed here: [python-explorer](https://python-explorer.onrender.com/).
 
 Summary
 -------
@@ -18,6 +18,6 @@ Oftentimes, the only reason we know about a certain class/function/method is bec
 
 Future
 ------
-I would like to keep improving and learning about the various aspects I have seen so far. The deployed version of the app runs a little slow relative to a local version, but I am definitely happy with the result so far. If anything, this has been a great project and learning experience for myself. Open to suggestions for improvements, ideas, collaboration interest.
+I would like to keep improving and learning about the various aspects I have seen so far. The deployed version of the app runs slightly slower than a local version, but I am definitely happy with the result so far. If anything, this has been a great project and learning experience for myself. Open to suggestions for improvements, ideas, collaboration interest, etc.
 
-I know I need to add some 'About' sections both in the app and on here, along with some basic 'how to' information. 
+I already know I need to add some 'About' sections both in the app and on here, along with some basic 'how to' information. 
