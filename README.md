@@ -2,7 +2,7 @@
 
 Developmental build of an experimental python object exploration tool and interface.
 
-Built with python using [Dash](https://dash.plotly.com) and deployed with [rendor](https://render.com).
+Built with python using [Dash](https://dash.plotly.com) and deployed with [render](https://render.com).
 
 Beta version can be accessed here: [python-explorer](https://python-explorer.onrender.com/).
 
