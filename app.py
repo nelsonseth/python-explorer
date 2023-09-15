@@ -679,22 +679,22 @@ class dashLayout:
     _LAYOUT_STORES = html.Div([
         dcc.Store(
             id=_comp_id('m-data', 'tabs', 0),
-            storage_type='memory',
+            storage_type='session',
             data=[],
         ),
         dcc.Store(
             id=_comp_id('m-filtered-data', 'tabs', 0),
-            storage_type='memory',
+            storage_type='session',
             data=[],
         ),
         dcc.Store(
             id=_comp_id('t-data', 'trace', 0),
-            storage_type='memory',
+            storage_type='session',
             data=[],
         ),
         dcc.Store(
             id=_comp_id('notify-data', 'notify', 0),
-            storage_type='memory',
+            storage_type='session',
             data=[]
         )
     ])
