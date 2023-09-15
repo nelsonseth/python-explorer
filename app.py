@@ -291,136 +291,168 @@ def _publish_member_info(tracepath: str,
 
 # Layout definitions-----------------------------------------------------------
 
-_page_container_height = '100vh'
-_page_container_width = '100vw'
+_EXPLORE_BUTTON = dmc.Button(
+            'Explore More',
+            id=_comp_id('explore-button', 'tabs', 0),
+            color='green',
+            disabled=True,
+            **_button_kwargs
+        )
 
-_title_row_height = '8%'
-_body_row_height = '90%'
-
-_member_header_height = '12%'
-_member_tabs_height = '85%'
-
-_signature_row_height = '30%'
-_docstring_row_height = '70%'
-
-# Currently an extremely hacky way to keep the app stateless..
-# need to workout a cleaner way to handle this.
-class dashLayout:
-
-    def __init__(self):
-        self.layout = self._LAYOUT_ALL
-
-    _EXPLORE_BUTTON = dmc.Button(
-                'Explore More',
-                id=_comp_id('explore-button', 'tabs', 0),
-                color='green',
-                disabled=True,
-                **_button_kwargs
-            )
-
-    _TITLE_ROW_CONTENT = dmc.Group(
-        [
-            dmc.Group(
-                children=[
-                    dmc.ActionIcon(
-                        children=DashIconify(
-                            icon='iconamoon:menu-burger-horizontal',
-                            width=40,
-                            color='black',
-                        ),
-                        variant='light',
-                        id=_comp_id('menu-button', 'menu', 0),
-                        size='lg',
-                        style={
-                            'background-color':'#eaffed'
-                        }
+_TITLE_ROW_CONTENT = dmc.Group(
+    [
+        dmc.Group(
+            children=[
+                dmc.ActionIcon(
+                    children=DashIconify(
+                        icon='iconamoon:menu-burger-horizontal',
+                        width=40,
+                        color='black',
                     ),
-                    dmc.Space(h=5),
-                    dmc.Text(
-                        'Python Explorer',
-                        style={
-                            'font-size':'1.5em',
-                            'font-weight':'700',
-                            'align':'center'
-                        },
-                    ),
-                ],
-                position='left',
-            ),
-            dmc.NavLink(
-                icon=DashIconify(icon='devicon:github', width=40),
-                href='https://github.com/nelsonseth/python-explorer',
-                variant = 'subtle',
-                style={
-                    'width':'50px',
-                    'background-color':'#eaffed'}
-            )
-        ],
-        position='apart',
-    )
-
-    _MEMBER_TABS = dbc.Container(
-        [
-            dbc.Row([   
-                dbc.Col(
-                    dmc.Tabs(
-                        dmc.TabsList(
-                            children=[],
-                            id=_comp_id('m-tabs', 'tabs', 0),
-                            grow=True,
-                        ),
-                        id=_comp_id('m-tabs-group', 'tabs', 0),
-                        value='modules',
-                        variant='default',
-                        color='blue',
-                        orientation='vertical',
-                    ),
-                    width='auto',
-                ),
-                dbc.Col(
-                    children=[
-                        _placeholder_text('Explorer Members')
-                    ],
-                    id=_comp_id('m-tabs-content', 'tabs', 0),
+                    variant='light',
+                    id=_comp_id('menu-button', 'menu', 0),
+                    size='lg',
                     style={
-                        'height':'100%',
-                        'max-height':'100%',
-                        'overflow':'auto'
+                        'background-color':'#eaffed'
                     }
                 ),
+                dmc.Space(h=5),
+                dmc.Text(
+                    'Python Explorer',
+                    style={
+                        'font-size':'1.5em',
+                        'font-weight':'700',
+                        'align':'center'
+                    },
+                ),
             ],
+            position='left',
+        ),
+        dmc.NavLink(
+            icon=DashIconify(icon='devicon:github', width=40),
+            href='https://github.com/nelsonseth/python-explorer',
+            variant = 'subtle',
             style={
-                'height':'100%',
-                'width':'100%',
-                'margin':'auto'
-                },
-            )
+                'width':'50px',
+                'background-color':'#eaffed'}
+        )
+    ],
+    position='apart',
+)
+
+
+
+_MEMBER_TABS = dbc.Container(
+    [
+        dbc.Row([   
+            dbc.Col(
+                dmc.Tabs(
+                    dmc.TabsList(
+                        children=[],
+                        id=_comp_id('m-tabs', 'tabs', 0),
+                        grow=True,
+                    ),
+                    id=_comp_id('m-tabs-group', 'tabs', 0),
+                    value='modules',
+                    variant='default',
+                    color='blue',
+                    orientation='vertical',
+                ),
+                width='auto',
+            ),
+            dbc.Col(
+                children=[
+                    _placeholder_text('Explorer Members')
+                ],
+                id=_comp_id('m-tabs-content', 'tabs', 0),
+                style={
+                    'height':'100%',
+                    'max-height':'100%',
+                    'overflow':'auto'
+                }
+            ),
         ],
         style={
-            'height':'100%'
-        },
-        fluid=True,
-    )
+            'height':'100%',
+            'width':'100%',
+            'margin':'auto'
+            },
+        )
+    ],
+    style={
+        'height':'100%'
+    },
+    fluid=True,
+)
 
-    _MEMBER_HEADER = dbc.Container(
-        [
-            dbc.Row([
-                dbc.Col([
-                    dmc.Breadcrumbs(
-                    children=[
-                        _placeholder_text('Explorer Navigation')
+_MEMBER_HEADER = dbc.Container(
+    [
+        dbc.Row([
+            dbc.Col([
+                dmc.Breadcrumbs(
+                children=[
+                    _placeholder_text('Explorer Navigation')
+                ],
+                id=_comp_id('t-breadcrumbs','trace', 0),
+                separator='.',
+                ),
+            ])
+            ],
+            align='center',
+            style={
+                'height':'50%',
+                'width':'100%',
+                'margin':'auto',
+            }
+        ),
+        dbc.Row([
+            dbc.Col([
+                dmc.TextInput(
+                    placeholder='Search Current Members',
+                    type='text',
+                    size='sm',
+                    id=_comp_id('search-input', 'search', 0),
+                )
+                ],
+                align='center'
+            ),
+            dbc.Col([
+                dmc.RadioGroup([
+                    dmc.Radio('Contains', value='contains'),
+                    dmc.Radio('Starts with', value='startswith')
                     ],
-                    id=_comp_id('t-breadcrumbs','trace', 0),
-                    separator='.',
-                    ),
-                ])
+                    value='startswith',
+                    orientation='horizontal',
+                    size='sm',
+                    spacing='xs',
+                    id=_comp_id('search-radio', 'search', 0),
+                ),
                 ],
                 align='center',
-                style={
-                    'height':'50%',
-                    'width':'100%',
-                    'margin':'auto',
-                }
+            )
+            ],
+            style={
+                'height':'50%',
+                'width':'100%',
+                'margin':'auto',
+            }
+        )
+    ],
+    fluid=True,
+)
+
+_MEMBER_HEADER2 = dbc.Container(
+    [
+        dbc.Stack([
+            dbc.Row([
+                dmc.Breadcrumbs(
+                children=[
+                    _placeholder_text('Explorer Navigation')
+                ],
+                id=_comp_id('t-breadcrumbs','trace', 0),
+                separator='.',
+                ),
+                ]
             ),
             dbc.Row([
                 dbc.Col([
@@ -448,361 +480,311 @@ class dashLayout:
                     align='center',
                 )
                 ],
-                style={
-                    'height':'50%',
-                    'width':'100%',
-                    'margin':'auto',
-                }
             )
-        ],
-        fluid=True,
-    )
+            ],
+            direction='vertical',
+            gap=2,
+        ),
+    ],
+    fluid=True,
+)
 
-    _MEMBER_HEADER2 = dbc.Container(
-        [
-            dbc.Stack([
-                dbc.Row([
-                    dmc.Breadcrumbs(
-                    children=[
-                        _placeholder_text('Explorer Navigation')
-                    ],
-                    id=_comp_id('t-breadcrumbs','trace', 0),
-                    separator='.',
+_page_container_height = '100vh'
+_page_container_width = '100vw'
+
+_title_row_height = '8%'
+_body_row_height = '90%'
+
+_member_header_height = '12%'
+_member_tabs_height = '85%'
+
+_signature_row_height = '30%'
+_docstring_row_height = '70%'
+
+_LAYOUT_MAIN = dbc.Container(
+    [
+        # Menu / Title Row
+        dbc.Row(
+            children=_TITLE_ROW_CONTENT,
+            style={
+                'height':_title_row_height,
+                'width':'100%',
+                'margin':'auto',
+            },
+        ),
+        # Body Row
+        dbc.Row(
+            [
+                # Member tabs column 
+                dbc.Col(
+                    dmc.Paper(
+                        children=[
+                            dbc.Row(
+                                _MEMBER_HEADER2,
+                                style={
+                                    'height':_member_header_height,
+                                    'width':'100%',
+                                    'margin':'auto'
+                                },
+                                align='start',
+                                justify='start',
+                            ),
+                            dmc.Divider(
+                                orientation='horizontal',
+                                size='sm',
+                                style={'width':'100%'}
+                            ),
+                            dmc.Space(h=3),
+                            dbc.Row(
+                                _MEMBER_TABS,
+                                style={
+                                    'height':_member_tabs_height,
+                                    'width':'100%',
+                                    'margin':'auto',
+                                }
+                            )
+                        ],
+                        **_paper_kwargs_no_scroll,
                     ),
-                    ]
+                    width=4,
+                    style={
+                        'height':'100%',
+                        'margin':'auto',
+                    },
                 ),
-                dbc.Row([
-                    dbc.Col([
-                        dmc.TextInput(
-                            placeholder='Search Current Members',
-                            type='text',
-                            size='sm',
-                            id=_comp_id('search-input', 'search', 0),
-                        )
-                        ],
-                        align='center'
-                    ),
-                    dbc.Col([
-                        dmc.RadioGroup([
-                            dmc.Radio('Contains', value='contains'),
-                            dmc.Radio('Starts with', value='startswith')
-                            ],
-                            value='startswith',
-                            orientation='horizontal',
-                            size='sm',
-                            spacing='xs',
-                            id=_comp_id('search-radio', 'search', 0),
-                        ),
-                        ],
-                        align='center',
-                    )
-                    ],
-                )
-                ],
-                direction='vertical',
-                gap=2,
-            ),
-        ],
-        fluid=True,
-    )
-
-    _LAYOUT_MAIN = dbc.Container(
-        [
-            # Menu / Title Row
-            dbc.Row(
-                children=_TITLE_ROW_CONTENT,
-                style={
-                    'height':_title_row_height,
-                    'width':'100%',
-                    'margin':'auto',
-                },
-            ),
-            # Body Row
-            dbc.Row(
-                [
-                    # Member tabs column 
-                    dbc.Col(
-                        dmc.Paper(
-                            children=[
-                                dbc.Row(
-                                    _MEMBER_HEADER2,
-                                    style={
-                                        'height':_member_header_height,
-                                        'width':'100%',
-                                        'margin':'auto'
-                                    },
-                                    align='start',
-                                    justify='start',
-                                ),
-                                dmc.Divider(
-                                    orientation='horizontal',
-                                    size='sm',
-                                    style={'width':'100%'}
-                                ),
-                                dmc.Space(h=3),
-                                dbc.Row(
-                                    _MEMBER_TABS,
-                                    style={
-                                        'height':_member_tabs_height,
-                                        'width':'100%',
-                                        'margin':'auto',
-                                    }
-                                )
-                            ],
-                            **_paper_kwargs_no_scroll,
-                        ),
-                        width=4,
-                        style={
-                            'height':'100%',
-                            'margin':'auto',
-                        },
-                    ),
-                    # Member information column
-                    dbc.Col(
-                        [
-                            # signature / member info row
-                            dbc.Row([
-                                dmc.Paper([
-                                    dbc.Row([
-                                        dbc.Col(
-                                            dmc.Card(
-                                                children=[
-                                                    dmc.CardSection(
-                                                        dmc.Group(
-                                                            children=[
-                                                                dmc.Text('Current Member',
-                                                                    weight=700,
-                                                                    size='xl',
-                                                                    id=_comp_id('current-member-title', 'tabs', 0)
-                                                                ),
-                                                                _EXPLORE_BUTTON                                                                                                                            
-                                                            ],
-                                                            position='apart',                                                      
-                                                        ),
-                                                        withBorder=True,
-                                                    ),
-                                                    dmc.CardSection(
-                                                        children=[
-                                                            _placeholder_text('Current Member Info'),
-                                                        ],
-                                                        id=_comp_id('current-member-info', 'tabs', 0),
-                                                    )
-                                                ],
-                                                p='sm',
-                                                style={
-                                                    'height':'100%',
-                                                    'max-height':'100%',
-                                                    'width':'100%', 
-                                                    'overflow':'auto',                                              
-                                                    'background-color':'#fff8ea',
-                                                }
-                                                
-                                            ),           
-                                            width=6,
-                                            style={
-                                                'height':'100%',
-                                                'max-height':'100%',
-                                                #'overflow':'auto',
-                                                'border-right':'2px dashed gray'
-                                            },
-                                        ),
-                                        dbc.Col(
+                # Member information column
+                dbc.Col(
+                    [
+                        # signature / member info row
+                        dbc.Row([
+                            dmc.Paper([
+                                dbc.Row([
+                                    dbc.Col(
+                                        dmc.Card(
                                             children=[
-                                                _placeholder_text('Member Signature')
+                                                dmc.CardSection(
+                                                    dmc.Group(
+                                                        children=[
+                                                            dmc.Text('Current Member',
+                                                                weight=700,
+                                                                size='xl',
+                                                                id=_comp_id('current-member-title', 'tabs', 0)
+                                                            ),
+                                                            _EXPLORE_BUTTON                                                                                                                            
+                                                        ],
+                                                        position='apart',                                                      
+                                                    ),
+                                                    withBorder=True,
+                                                ),
+                                                dmc.CardSection(
+                                                    children=[
+                                                        _placeholder_text('Current Member Info'),
+                                                    ],
+                                                    id=_comp_id('current-member-info', 'tabs', 0),
+                                                )
                                             ],
-                                            id=_comp_id('sig-info', 'tabs', 0),
-                                            width=6,
+                                            p='sm',
                                             style={
                                                 'height':'100%',
                                                 'max-height':'100%',
-                                                'overflow':'auto'
-                                            },
-                                        )
-                                        ],
-                                        #class_name='g-0',
+                                                'width':'100%', 
+                                                'overflow':'auto',                                              
+                                                'background-color':'#fff8ea',
+                                            }
+                                            
+                                        ),           
+                                        width=6,
                                         style={
                                             'height':'100%',
-                                            'width':'100%',
-                                            'margin':'auto',
+                                            'max-height':'100%',
+                                            #'overflow':'auto',
+                                            'border-right':'2px dashed gray'
+                                        },
+                                    ),
+                                    dbc.Col(
+                                        children=[
+                                            _placeholder_text('Member Signature')
+                                        ],
+                                        id=_comp_id('sig-info', 'tabs', 0),
+                                        width=6,
+                                        style={
+                                            'height':'100%',
+                                            'max-height':'100%',
+                                            'overflow':'auto'
                                         },
                                     )
                                     ],
-                                    **_paper_kwargs_no_scroll
-                                ),
-                                ],                          
-                                style={
-                                    'height':_signature_row_height,
-                                    'width':'100%',
-                                    'margin':'auto',
-                                },
+                                    #class_name='g-0',
+                                    style={
+                                        'height':'100%',
+                                        'width':'100%',
+                                        'margin':'auto',
+                                    },
+                                )
+                                ],
+                                **_paper_kwargs_no_scroll
                             ),
-                            # member docstring row
-                            dbc.Row(                           
-                                dmc.Paper(
-                                    children=[
-                                        _placeholder_text('Member Docstring')
-                                    ],
-                                    id=_comp_id('doc-info', 'tabs', 0),
-                                    **_paper_kwargs_scroll,                           
-                                ),
-                                style={
-                                    'height':_docstring_row_height,
-                                    'width':'100%',
-                                    'margin':'auto',
-                                },
+                            ],                          
+                            style={
+                                'height':_signature_row_height,
+                                'width':'100%',
+                                'margin':'auto',
+                            },
+                        ),
+                        # member docstring row
+                        dbc.Row(                           
+                            dmc.Paper(
+                                children=[
+                                    _placeholder_text('Member Docstring')
+                                ],
+                                id=_comp_id('doc-info', 'tabs', 0),
+                                **_paper_kwargs_scroll,                           
                             ),
+                            style={
+                                'height':_docstring_row_height,
+                                'width':'100%',
+                                'margin':'auto',
+                            },
+                        ),
+                    ],
+                    width=8,
+                    style={
+                        'height':'100%',
+                        'margin':'auto',
+                    },
+                ),
+            ],
+            class_name='g-0',
+            style={
+                'height':_body_row_height,
+                'width':'100%',
+                'margin':'auto',
+            },
+        )
+    ],
+    style={
+        'height':_page_container_height,
+        'width':_page_container_width,
+        'margin':'auto',
+        'background-color':'#eaffed'
+    },
+    fluid=True,
+)
+
+_LAYOUT_STORES = html.Div([
+    dcc.Store(
+        id=_comp_id('m-data', 'tabs', 0),
+        storage_type='memory',
+        data=[],
+    ),
+    dcc.Store(
+        id=_comp_id('m-filtered-data', 'tabs', 0),
+        storage_type='memory',
+        data=[],
+    ),
+    dcc.Store(
+        id=_comp_id('t-data', 'trace', 0),
+        storage_type='memory',
+        data=[],
+    ),
+    dcc.Store(
+        id=_comp_id('notify-data', 'notify', 0),
+        storage_type='memory',
+        data=[]
+    )
+])
+
+_package_buttons = _get_p_buttons(_all_packages, 'green')
+
+_DRAWER_CONTENT = dmc.Accordion(
+    children=[
+        dmc.AccordionItem(
+            [
+                dmc.AccordionControl('Standard Modules (3.10)'),
+                dmc.AccordionPanel(
+                    dmc.Paper(
+                        children=[
+                            _get_button_stack(
+                                _package_buttons,
+                                group='standards',
+                            )
                         ],
-                        width=8,
                         style={
-                            'height':'100%',
+                            'height':'60vh',
+                            'max-height':'60vh',
+                            'width':'100%',
                             'margin':'auto',
-                        },
-                    ),
-                ],
-                class_name='g-0',
-                style={
-                    'height':_body_row_height,
-                    'width':'100%',
-                    'margin':'auto',
-                },
-            )
-        ],
-        style={
-            'height':_page_container_height,
-            'width':_page_container_width,
-            'margin':'auto',
-            'background-color':'#eaffed'
-        },
-        fluid=True,
-    )
-
-    _LAYOUT_STORES = html.Div([
-        dcc.Store(
-            id=_comp_id('m-data', 'tabs', 0),
-            storage_type='session',
-            data=[],
-        ),
-        dcc.Store(
-            id=_comp_id('m-filtered-data', 'tabs', 0),
-            storage_type='session',
-            data=[],
-        ),
-        dcc.Store(
-            id=_comp_id('t-data', 'trace', 0),
-            storage_type='session',
-            data=[],
-        ),
-        dcc.Store(
-            id=_comp_id('notify-data', 'notify', 0),
-            storage_type='session',
-            data=[]
-        )
-    ])
-
-    _package_buttons = _get_p_buttons(_all_packages, 'green')
-
-    _DRAWER_CONTENT = dmc.Accordion(
-        children=[
-            dmc.AccordionItem(
-                [
-                    dmc.AccordionControl('Standard Modules (3.10)'),
-                    dmc.AccordionPanel(
-                        dmc.Paper(
-                            children=[
-                                _get_button_stack(
-                                    _package_buttons,
-                                    group='standards',
-                                )
-                            ],
-                            style={
-                                'height':'60vh',
-                                'max-height':'60vh',
-                                'width':'100%',
-                                'margin':'auto',
-                                'overflow':'auto',
-                            }
-                        )
+                            'overflow':'auto',
+                        }
                     )
-                ],
-                value='standards',   
-            ),
-            dmc.AccordionItem(
-                [
-                    dmc.AccordionControl('Common Libraries'),
-                    dmc.AccordionPanel(
-                        dmc.Paper(
-                            children=[
-                                _get_button_stack(
-                                    _package_buttons,
-                                    group='commons',
-                                )
-                            ],
-                            style={
-                                'height':'60vh',
-                                'max-height':'60vh',
-                                'width':'100%',
-                                'margin':'auto',
-                                'overflow':'auto',
-                            }
-                        )
+                )
+            ],
+            value='standards',   
+        ),
+        dmc.AccordionItem(
+            [
+                dmc.AccordionControl('Common Libraries'),
+                dmc.AccordionPanel(
+                    dmc.Paper(
+                        children=[
+                            _get_button_stack(
+                                _package_buttons,
+                                group='commons',
+                            )
+                        ],
+                        style={
+                            'height':'60vh',
+                            'max-height':'60vh',
+                            'width':'100%',
+                            'margin':'auto',
+                            'overflow':'auto',
+                        }
                     )
-                ],
-                value='commons',
-            ),
-            dmc.AccordionItem(
-                [
-                    dmc.AccordionControl('This app is built with...'),
-                    dmc.AccordionPanel(
-                        dmc.Paper(
-                            children=[
-                                _get_button_stack(
-                                    _package_buttons,
-                                    group='app_packs',
-                                )
-                            ],
-                            style={
-                                'height':'60vh',
-                                'max-height':'60vh',
-                                'width':'100%',
-                                'margin':'auto',
-                                'overflow':'auto',
-                            }
-                        )
+                )
+            ],
+            value='commons',
+        ),
+        dmc.AccordionItem(
+            [
+                dmc.AccordionControl('This app is built with...'),
+                dmc.AccordionPanel(
+                    dmc.Paper(
+                        children=[
+                            _get_button_stack(
+                                _package_buttons,
+                                group='app_packs',
+                            )
+                        ],
+                        style={
+                            'height':'60vh',
+                            'max-height':'60vh',
+                            'width':'100%',
+                            'margin':'auto',
+                            'overflow':'auto',
+                        }
                     )
-                ],
-                value='app_packs',
-            ),
-        ],
-    )
+                )
+            ],
+            value='app_packs',
+        ),
+    ],
+)
 
-    _LAYOUT_DRAWER = dmc.Drawer(
-        children=[
-            _DRAWER_CONTENT
-        ],
-        id=_comp_id('drawer', 'drawer', 0),
-        title='Choose an item to explore.',
-        closeOnClickOutside=True,
-        closeOnEscape=True,
-        size='25vw',
-        style={
-            'height':'95vh',
-            'overflow':'hidden',
-            'margin':'auto',
-        }
-    )
-
-    _LAYOUT_ALL = dmc.NotificationsProvider(
-            html.Div(
-                [
-                    html.Div(id=_comp_id('notifier', 'notify', 0)),
-                    _LAYOUT_MAIN,
-                    _LAYOUT_DRAWER,
-                    _LAYOUT_STORES,
-                ]
-            ),
-            position='top-right',
-            autoClose=2000,
-        )
+_LAYOUT_DRAWER = dmc.Drawer(
+    children=[
+        _DRAWER_CONTENT
+    ],
+    id=_comp_id('drawer', 'drawer', 0),
+    title='Choose an item to explore.',
+    closeOnClickOutside=True,
+    closeOnEscape=True,
+    size='25vw',
+    style={
+        'height':'95vh',
+        'overflow':'hidden',
+        'margin':'auto',
+    }
+)
 
 
 # App internal functionality (callback) definitions----------------------------
@@ -818,10 +800,23 @@ class BaseAppWrap():
 
 class AppWrap(BaseAppWrap):
     
+    layout = dmc.NotificationsProvider(
+        html.Div(
+            [
+                html.Div(id=_comp_id('notifier', 'notify', 0)),
+                _LAYOUT_MAIN,
+                _LAYOUT_DRAWER,
+                _LAYOUT_STORES,
+            ]
+        ),
+        position='top-right',
+        autoClose=2000,
+    )
+    
+
     def __init__(self, app):
         super().__init__(app=app)
 
-        self.layout = dashLayout().layout
         self.explore = Explore
         self.m_buttons = []
         self.packages = [p[1] for p in _all_packages]
