@@ -6,6 +6,8 @@ Built with python using [Dash](https://dash.plotly.com) and deployed with [rende
 
 Beta version can be accessed here: [python-explorer](https://python-explorer.onrender.com/).
 
+*** Currently having issues with the app being stateless. Works great for one person, but with multiple instances it breaks down.***
+
 Summary
 -------
 This idea stems from my own curiousity about existing python packages both as a beginner and as someone who tends to want to know why something is the way that it is. When presented with new packages, we generally have two options to learn about them... read the docs or explore the raw code. This tool is intended to live somewhere in the middle of those two options. This will definitely not be a replacement for the docs, nor will it give you all the information possible by going to the source code. 
