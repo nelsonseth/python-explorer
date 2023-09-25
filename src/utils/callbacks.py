@@ -271,7 +271,7 @@ def show_navigation(status):
     Output(comp_id('explore-button', 'tabs', 0), 'disabled'),
     Output(comp_id('clickstate', 'app', 0), 'data'),
     Input(comp_id('m-button', ALL, ALL), 'n_clicks'),
-    State(comp_id('status', 'app', 0), 'data'),
+    Input(comp_id('status', 'app', 0), 'data'),
     State(comp_id('clickstate', 'app', 0), 'data'),
     State(comp_id('filtered-members', 'tabs', 0), 'data'),
     prevent_initial_call=True
