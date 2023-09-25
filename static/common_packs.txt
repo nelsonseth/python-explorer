@@ -1,0 +1,10 @@
+keras
+matplotlib.pyplot
+nltk
+numpy
+pandas
+requests
+scipy
+seaborn
+sklearn
+tensorflow
