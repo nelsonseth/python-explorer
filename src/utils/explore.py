@@ -22,13 +22,13 @@
 
 __all__ = [
     # classes
-    'AttributeDict', 'Explore',
+    'AttributeDict', 'Explore', 'ExploreFromStatus'
     
     # functions
-    'isproperty', 'getdocstring', 'getmembers_categorized',
+    'isproperty', 'getmembers_categorized',
     
     # Helper functions
-    '_getmember_counts', '_flat_members', '_sig_format'
+    '_getmember_counts', '_flat_members', '_sig_format', '_build_class_heritage'
 ]
 
 __author__ = ('Seth M. Nelson <github.com/nelsonseth>')
@@ -53,19 +53,6 @@ def isproperty(obj) -> bool:
     return (hasattr(obj, 'getter') and 
             hasattr(obj, 'setter') and
             hasattr(obj, 'deleter'))
-
-
-# Again, inspect is doing the heavy lifting here. Just wanted to still return 
-# a string if no doc found.
-# Update: no longer used... returning None is more useful
-def getdocstring(obj) -> str:
-    '''Return object docstring, if possible.'''
-    doc = inspect.getdoc(obj)
-    nodoc = 'No docstring available.'
-    if not doc:
-        return nodoc
-    else:
-        return doc
 
 
 _IGNORE = [
@@ -124,12 +111,12 @@ def getmembers_categorized(obj) -> dict:
     # Gather members from __all__ or inspection.
     # Ignoring and removing all dunders (__vars__ and _vars) for now. These 
     # do not serve a purpose in my current vision of this tool.
-    # try:
-    #     public_members_names = [m for m in obj.__all__ if not m.startswith('_')]
-    # except AttributeError:
-    public_members = [m for m in inspect.getmembers(obj) 
-                    if not m[0].startswith('_')]
-    public_members_names = [m[0] for m in public_members]
+    try:
+        public_members_names = [m for m in obj.__all__ if not m.startswith('_')]
+    except AttributeError:
+        public_members = [m for m in inspect.getmembers(obj) 
+                        if not m[0].startswith('_')]
+        public_members_names = [m[0] for m in public_members]
 
     modules = []
     classes = []
@@ -239,26 +226,71 @@ def _sig_format(sig_str: str) -> str:
     sig_pretty = ''.join([s+',  \n' for s in sig_split])
     
     return sig_pretty[0:-2]
-        
+
+
+def _build_class_heritage(cls, nodes=None, heritage=None):
+    '''Internal helper function. 
+    
+    Recursively builds inheritance tree for a given class.
+    '''
+    if nodes == None:
+        nodes = set()
+    if heritage == None: 
+        heritage = dict()
+
+    cn = cls.__name__
+    bases = cls.__bases__
+
+    try:
+        if bases[0].__name__ == 'object':
+            node_info = (cn, cls.__module__, 'base')
+            if node_info not in nodes:
+                nodes.add(node_info)
+            return nodes, heritage
+        else:
+
+            node_info = (cn, cls.__module__, 'derived')
+            nodes.add(node_info)
+
+            keys = list(heritage.keys())
+
+            for b in bases:
+                bn = b.__name__
+                if bn in keys:
+                    heritage[bn].add(cn)
+                else:
+                    heritage[bn] = set([cn])
+                
+                # recursively step into each base heritage as well 
+                nodes, heritage = _build_class_heritage(b, nodes, heritage)
+    except:
+        return nodes, heritage
+
+    return nodes, heritage
+
 
 #------------------------------------------------------------------------------
 
 
 class Explore():
     
-    '''Class space controlling options for navigating a given object.'''
+    '''Class for navigating members of a given object.
+    
+    Parameters
+    ----------
+    obj: object
+        The object you want to explore. Typically a module or package.
+    '''
 
     def __init__(self, obj) -> None:
 
-        # Within the local class namespace, 'self._root' will always point 
-        # to the inputed object reference in the global namespace. 
         self._root = obj
-        
+
         # internal history list of object reference strings
         self._refhistory = ['self._root']
 
         # internal history list of object simple names for display
-        self._history = [self._getname('self._root')]
+        self._history = [obj.__name__]
     
         # internal join of history list 
         self._trace = self._history[0]
@@ -266,7 +298,7 @@ class Explore():
         # grab intial member set of inputed object.
         self._updatemembers()
 
-        
+            
     def _checkmember(self, member: str) -> bool:
         '''Internal helper method.
         
@@ -277,22 +309,11 @@ class Explore():
 
         if member not in members:
             raise AttributeError(
-                f"'{member}' is not a member of '{self._trace}'"
+                f"'{member}' is not a public member of '{self._trace}'"
             )
         else:
             return True
 
-
-    def _getname(self, obj_str: str) -> str:
-        '''Internal helper method. 
-        
-        Return simple name of root object. If none, return 'root'.
-        '''
-        try:
-            return eval(f'{obj_str}.__name__')
-        except AttributeError:
-            return 'root'
-        
 
     def _updatemembers(self) -> int:
         '''Internal helper method.
@@ -414,7 +435,7 @@ class Explore():
             return inspect.getdoc(eval(obj_str))
     
 
-    def getsignature(self, member: Union[str,None] = None, printed: bool = False) -> (str | None):
+    def getsignature(self, member: Union[str,None] = None, printed: bool = False) -> Union[str, None]:
         '''Return signature of current object or member of object.'''
         if member and self._checkmember(member):
             obj_str = f'{self._refhistory[-1]}.{member}'
@@ -433,7 +454,7 @@ class Explore():
             return _sig_format(sig)
         
 
-    def gettype(self, member: Union[str,None] = None, printed: bool = False) -> (str | None):
+    def gettype(self, member: Union[str,None] = None, printed: bool = False)-> Union[str, None]:
         '''Return type of current object or member of object.'''
         if member and self._checkmember(member):
             obj_str = f'{self._refhistory[-1]}.{member}'
@@ -443,13 +464,102 @@ class Explore():
         try:
             member_type = type(eval(obj_str)).__name__
         except:
-             #return 'No signature available.'
              return None
         
         if printed:
             return print(member_type)
         else:
             return member_type
+        
+
+    def get_class_heritage(self,
+                           classes: Union[str, list[str], None] = None,
+                           listify: bool = False,
+                           ) -> dict:
+        
+        '''Return class heritage dictionary of current class members or sublist
+        of current class members. Inputs limited to public classes.
+
+        Parameters
+        ----------
+        classes: str or list[str] or None
+            Class members string(s) within current exploration level. Default
+            is None (meaning we want the heritage of all current classes).
+        listify: bool, optional
+            Convert heritage elements from sets to lists before returning. 
+            Default is False.
+        
+        Returns
+        ------
+        class heritage: dict
+            Dictionary representing class heritage. The format was geared towards
+            use in the python-explorer app and inputs to the cytoscape library.
+
+            * The dictionary has two main elements: 'nodes' and 'heritage'.
+            * 'nodes' is a set of tuples. Each tuple contains 3 elements:
+                - (0) class name
+                - (1) class module
+                - (2) 'base' or 'derived'.
+                    * 'base' classes have only one base, namely 'object'.
+                    * 'derived' classes inherit from at least one other class.
+            * 'heritage' is a dictionary of sets:
+                - key: a class parent in the heritage tree.
+                - heritage[key] = set of classes that subclass 'key'
+        '''
+
+        if classes == None:
+            cls_strs = self._members.classes
+        else:
+            if type(classes) == type(''):
+                cls_strs = [classes]
+            elif type(classes) == type([]):
+                cls_strs = classes
+            else:
+                cls_strs = []
+
+        if cls_strs == []:
+            return AttributeDict(
+                {
+                'nodes':[],
+                'heritage':{}
+                }
+            )
+        
+        for c in cls_strs:
+            if c not in self._members.classes:
+                raise AttributeError(
+                    f"'{c}' is not a public class member of '{self._trace}'"
+                )
+
+        cls_objs = [eval(f'{self._refhistory[-1]}.{c}') for c in cls_strs]
+        
+        nodes = set()
+        heritage = dict()
+
+        for c in cls_objs:
+            new_nodes, new_heritage = _build_class_heritage(c, nodes, heritage)
+            
+            nodes.update(new_nodes)
+
+            new_keys = list(new_heritage.keys())
+            old_keys = list(heritage.keys())
+            for k in new_keys:
+                if k in old_keys:
+                    heritage[k].update(new_heritage[k])
+                else:
+                    heritage[k] = new_heritage[k]
+
+        if listify:
+            nodes = list(nodes)
+            for k in list(heritage.keys()):
+                heritage[k] = list(heritage[k])
+
+        return AttributeDict(
+            {
+            'nodes': nodes,
+            'heritage': heritage,
+            }
+        )
         
     # Public property calls for current members, membercounts, flatmembers, 
     # and trace. No setter is defined, thus these can only be written internally
@@ -478,12 +588,61 @@ class Explore():
         '''Return trace path of current explored object.'''
         return self._trace
     
+    @property
+    def status(self):
+        '''Return dict of current status.
+        
+        Returns
+        -------
+        status: dict
+            * Keys:
+                * 'refhistory': list of internal reference call strings
+                * 'history': list of the 'nice' names of the references
+                * 'trace': a '.'join() of history elements
+        
+        '''
+        return {
+            'refhistory': self._refhistory,
+            'history': self._history,
+            'trace': self._trace
+        }
+
+    
+class ExploreFromStatus(Explore):
+
+    '''Entry point into Explore from existing Explore status info.'''
+
+    def __init__(self, root, status: dict)-> None:
+        
+        '''Entry point into Explore from existing Explore status info.
+
+        Parameters
+        ----------
+        root: obj
+            The original parent obj of the current status. This is typically the
+            module represented by status['history'][0]
+        status: dict
+            This is the dict created from Explore.status
+        '''
+
+        # because we are evaluating strings, it is better to evaluate root before
+        # entering back into the class namespace... so that root is already a
+        # valid object as an input.
+        self._root = root
+
+        self._refhistory = status['refhistory']
+
+        self._history = status['history']
+
+        self._trace = status['trace']
+
+        self._updatemembers()
+
 
 #------------------------------------------------------------------------------
-
 
 if __name__ == '__main__':
     test = Explore(inspect)
 
-    test.getdoc(printed=True)
-    print(test.membercounts)
+    # test.getdoc(printed=True)
+    

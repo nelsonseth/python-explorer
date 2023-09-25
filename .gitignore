@@ -1,5 +1,10 @@
 # custom things
 src/__pycache__/
+src/layouts/__pycache__/
+src/layouts/testpit.py
+src/utils/__pycache__/
+src/utils/testpit.py
+src/assets/__pycache__/
 src/testpit.py
 tests/
 
