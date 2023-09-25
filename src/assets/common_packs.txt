@@ -1,3 +1,6 @@
-matplotlib.pyplot
+matplotlib
 numpy
 pandas
+scipy
+seaborn
+sklearn

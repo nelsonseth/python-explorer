@@ -8,10 +8,11 @@ from dash import html
 from .layout_utils import (
     comp_id,
     placeholder_text,
-    APP_BCOLOR,
+    HEADER_COLOR,
     BORDER_COLOR
 )
 
+# 'border':f'1px solid {BORDER_COLOR}',
 
 # list of dbc.Col() items to place in children of header row
 header_content = [
@@ -31,7 +32,7 @@ header_content = [
                 style={
                     'height':'2.5em',
                     'width':'2.5em',
-                    'background-color':APP_BCOLOR,
+                    'background-color':HEADER_COLOR,
                     'margin-top':'0.2em',
                     'padding':'0',
                 }
@@ -52,7 +53,7 @@ header_content = [
                     }
                 ),
                 style={
-                    'background-color':APP_BCOLOR,
+                    'background-color':HEADER_COLOR,
                 }
             ),
             dmc.Text(
@@ -77,7 +78,7 @@ header_content = [
     dbc.Col(
         placeholder_text('Explorer Navigation'),
         id=comp_id('t-breadcrumbs','trace', 0),
-        width=8,
+        width=7,
         style={
                 'height':'100%',
                 'margin':'0',
@@ -104,18 +105,18 @@ header_content = [
                     'height':'2.2em',
                     'width':'2.2em',
                     'padding':'0',
-                    'background-color':APP_BCOLOR,
+                    'background-color':HEADER_COLOR,
                 }
             ),
             ],
             position='right',
             spacing=6,
         ),
-        width=1,
+        width=2,
         style={
             'height':'100%',
             'margin':'0',
-            'padding':'0.35em 1em 0 0',
+            'padding':'0.35em 1em 0 0',  
         }
     ),
 ]

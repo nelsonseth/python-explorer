@@ -1,10 +1,11 @@
 
 import dash_mantine_components as dmc
 import dash_bootstrap_components as dbc
+from dash_iconify import DashIconify
 
 from .layout_utils import (
     comp_id,
-    APP_BCOLOR,
+    HEADER_COLOR,
     PAPER_BCOLOR,
     BORDER_COLOR,
 )
@@ -30,7 +31,7 @@ page_layout = dbc.Container([
             'border-right':f'1px solid {BORDER_COLOR}',
             'border-top-left-radius':'10px',
             'border-top-right-radius':'10px',
-            'background-color':APP_BCOLOR,
+            'background-color':HEADER_COLOR,
         }
     ),
     dbc.Row([
@@ -56,6 +57,12 @@ page_layout = dbc.Container([
                                         italic=True,
                                     ),
                                     value = 'member-information',
+                                    icon = DashIconify(
+                                        icon='devicon:readthedocs',
+                                        style={
+                                            'height':'1em'
+                                        }
+                                    ),
                                     style={
                                         'height':'2.5em',
                                         'border-top':f'1px solid {BORDER_COLOR}',
@@ -64,6 +71,7 @@ page_layout = dbc.Container([
                                         'border-top-left-radius':'10px',
                                         'border-top-right-radius':'10px',
                                         'margin':'0 2px 0 2px',
+                                        'background-color':PAPER_BCOLOR,
                                     }
                                 ),
                                 dmc.Tab(
@@ -74,6 +82,12 @@ page_layout = dbc.Container([
                                         italic=True,
                                     ),
                                     value = 'class-explorer',
+                                    icon = DashIconify(
+                                        icon='mdi:graph',
+                                        style={
+                                            'height':'1em'
+                                        }
+                                    ),
                                     style={
                                         'height':'2.5em',
                                         'border-top':f'1px solid {BORDER_COLOR}',
@@ -82,6 +96,7 @@ page_layout = dbc.Container([
                                         'border-top-left-radius':'10px',
                                         'border-top-right-radius':'10px',
                                         'margin':'0 2px 0 2px',
+                                        'background-color':PAPER_BCOLOR,
                                     }
                                 ),
                             ],

@@ -111,12 +111,12 @@ def getmembers_categorized(obj) -> dict:
     # Gather members from __all__ or inspection.
     # Ignoring and removing all dunders (__vars__ and _vars) for now. These 
     # do not serve a purpose in my current vision of this tool.
-    # try:
-    #     public_members_names = [m for m in obj.__all__ if not m.startswith('_')]
-    # except AttributeError:
-    public_members = [m for m in inspect.getmembers(obj) 
-                    if not m[0].startswith('_')]
-    public_members_names = [m[0] for m in public_members]
+    try:
+        public_members_names = [m for m in obj.__all__ if not m.startswith('_')]
+    except AttributeError:
+        public_members = [m for m in inspect.getmembers(obj) 
+                        if not m[0].startswith('_')]
+        public_members_names = [m[0] for m in public_members]
 
     modules = []
     classes = []
@@ -241,27 +241,30 @@ def _build_class_heritage(cls, nodes=None, heritage=None):
     cn = cls.__name__
     bases = cls.__bases__
 
-    if bases[0].__name__ == 'object':
-        node_info = (cn, cls.__module__, 'base')
-        if node_info not in nodes:
+    try:
+        if bases[0].__name__ == 'object':
+            node_info = (cn, cls.__module__, 'base')
+            if node_info not in nodes:
+                nodes.add(node_info)
+            return nodes, heritage
+        else:
+
+            node_info = (cn, cls.__module__, 'derived')
             nodes.add(node_info)
+
+            keys = list(heritage.keys())
+
+            for b in bases:
+                bn = b.__name__
+                if bn in keys:
+                    heritage[bn].add(cn)
+                else:
+                    heritage[bn] = set([cn])
+                
+                # recursively step into each base heritage as well 
+                nodes, heritage = _build_class_heritage(b, nodes, heritage)
+    except:
         return nodes, heritage
-    else:
-
-        node_info = (cn, cls.__module__, 'derived')
-        nodes.add(node_info)
-
-        keys = list(heritage.keys())
-
-        for b in bases:
-            bn = b.__name__
-            if bn in keys:
-                heritage[bn].add(cn)
-            else:
-                heritage[bn] = set([cn])
-            
-            # recursively step into each base heritage as well 
-            nodes, heritage = _build_class_heritage(b, nodes, heritage)
 
     return nodes, heritage
 

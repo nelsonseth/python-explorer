@@ -234,7 +234,7 @@ def create_tabs(data, tab):
 )
 def get_tab_content(activetab, data):
     try:
-        buttons = get_member_buttons(data[0], activetab, 'blue')
+        buttons = get_member_buttons(data[0], activetab)
         return get_button_stack(
             buttonlist = buttons,
             group = activetab
@@ -252,7 +252,7 @@ def get_tab_content(activetab, data):
 def show_navigation(status):
     try:
         return get_trace_group(
-            get_trace_buttons(status['history'], 'red')
+            get_trace_buttons(status['history'])
         )
     except:
         return no_update

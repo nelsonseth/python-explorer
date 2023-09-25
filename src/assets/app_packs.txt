@@ -1,6 +1,7 @@
 dash
-dash_mantine_components
 dash_bootstrap_components
-dash_iconify
+dash_cytoscape
 dash_extensions
+dash_iconify
+dash_mantine_components
 pypandoc

@@ -12,7 +12,7 @@ sys.path.append(Path(__file__).parent.parent)
 # utils is two levels up
 from utils.packagelist import all_packages
 
-package_buttons = get_package_buttons(all_packages, 'green')
+package_buttons = get_package_buttons(all_packages)
 
 
 accordian_panel_style = {
@@ -26,7 +26,7 @@ accordian_panel_style = {
 
 panel_dict = {
     'standard':'Standard Modules (3.10)',
-    'common':'Common Libraries',
+    'common':'Common Data Libraries',
     'app':'This app is built with:',
 }
 

@@ -20,17 +20,17 @@ from utils.explore import AttributeDict
 # Common Settings--------------------------------------------------------------
 
 PAPER_BCOLOR = '#fbfbf0'
-APP_BCOLOR = '#83fc95'
-BORDER_COLOR = '#c4c4c4'
+HEADER_COLOR = '#83fc95'
+BORDER_COLOR = '#a7a7a7'
 
 # common kwargs for dmc.Button components
-button_kwargs = {
-    'n_clicks':0,
-    'size':'sm',
-    'compact':True,
-    'variant':'subtle',
-    'radius':'md',
-}
+# button_kwargs = {
+#     'n_clicks':0,
+#     'size':'sm',
+#     'compact':True,
+#     'variant':'subtle',
+#     'radius':'md',
+# }
 
 # Helper Functions-------------------------------------------------------------
 
@@ -59,15 +59,14 @@ def get_notification(
         action='show',
         color='red',
         style={
-            'background-color':'#fbfbfa'
+            'background-color':'#FFF0F0'
         },
         icon=DashIconify(icon='oi:x')
     )
         
 
 def get_package_buttons(
-    namelist: list,
-    color: str
+    namelist: list
     ) -> list:
     '''Return list of buttons for packages.
     
@@ -78,15 +77,18 @@ def get_package_buttons(
         dmc.Button(
             children = n[1],
             id = comp_id('p-button', n[0], namelist.index(n)),
-            color=color,
-            **button_kwargs,
+            color='green',
+            n_clicks=0,
+            size='sm',
+            radius='md',
+            compact=True,
+            variant='subtle',
         ) for n in namelist
     ]
 
 
 def get_trace_buttons(
     namelist: list,
-    color: str,
     ) -> list:
     '''Return list of buttons for trace.
     
@@ -97,8 +99,12 @@ def get_trace_buttons(
         dmc.Button(
             children = n,
             id = comp_id('t-button', 'trace', namelist.index(n)),
-            color=color,
-            **button_kwargs,
+            color='dark',
+            n_clicks=0,
+            size='sm',
+            radius='md',
+            compact=True,
+            variant='light',
             style={
                 'padding':'2px',
                 'margin':'0',
@@ -110,7 +116,6 @@ def get_trace_buttons(
 def get_member_buttons(
     namelist: list,
     group: str,
-    color: str
     ) -> list:
     '''Return list of buttons for members.
     
@@ -122,8 +127,12 @@ def get_member_buttons(
         dmc.Button(
             children = n[1],
             id = comp_id('m-button', n[0], namelist.index(n)),
-            color=color,
-            **button_kwargs,
+            color='blue',
+            n_clicks=0,
+            size='sm',
+            radius='md',
+            compact=True,
+            variant='subtle',
         ) for n in namelist if group == n[0]
     ]
 
@@ -171,7 +180,7 @@ def get_trace_group(tracebuttons: list)-> dmc.Group:
     return dmc.Group(
         tlist,
         align='left',
-        spacing='2px',
+        spacing='4px',
         noWrap=True,
         style={
             'max-width':'100%',

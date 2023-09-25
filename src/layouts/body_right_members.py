@@ -17,7 +17,7 @@ explore_button = dmc.Button(
     color='green',
     disabled=True,
     size='sm',
-    variant='subtle',
+    variant='filled',
     compact=True,
     radius='md',
 )
