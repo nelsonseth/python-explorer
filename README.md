@@ -29,11 +29,11 @@ The Explore More button (center top of Member Information tab) allows you to ste
 ![](docs/ExploreMore.gif)
 
 ### Navigation
-As you explore objects, the tool will keep track of where you are in the navaigation listing (top of page). Just click one of the previous object buttons to return to that state.
+As you explore objects, the tool will keep track of where you are in the navigation listing (top of page). Just click one of the previous object buttons to return to that state.
 ![](docs/Navigation.gif)
 
 ### Search Members
-For a given space, the search input allows you to filter the members by members that either start with or contain the input text. This help narrow down options or helps you find something quicker if you know the name already.
+For a given space, the search input allows you to filter the members by members that either start with or contain the input text. This helps narrow down options or helps you find something quicker if you know the name already.
 ![](docs/Search.gif)
 
 ### Class Explorer
@@ -48,6 +48,6 @@ I would like to keep improving and learning about the various aspects I have see
 
 #### Current Ideas:
 * I think it would be nice to have standard listings from previous python versions as well. The current list is held in a static text file so you could maybe choose from other files to refresh the package listing in the drawer. Running from a single version of python certainly complicates the functionality of this concept. 
-* It would also be cool to have the user add in other packages that they would like to explore (more challenging in this kind of environment since everything is preloaded on the server side). Not sure if something like this is possible, but maybe.
+* It would also be cool to have the user add in other packages that they would like to explore (more challenging in this kind of environment since everything is preloaded on the server side). Not sure if something like this is possible, but maybe. I think eventually this may make more sense as a local install where the gui is started from the CLI to run locally in the browser. The options then to allow the user to explore their own set of desired packages becomes a lot easier.
 * Open to suggestions on the cytoscape formatting. I didn't think too hard about it, but would like to have better color contrast and clarity as to what is being represented.
 * I quickly found that absolutely nothing is consistent when it comes to docstrings, so if someone has a more robust (and safe) way of displaying a variety of docstring inputs, I'm all ears. 
