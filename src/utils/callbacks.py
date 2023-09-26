@@ -108,8 +108,22 @@ def update_explore(n1, n2, n3, packages, status, member):
 
         index = ctx.triggered_id.index
         mod = packages[index]
-        lexp = Explore(eval(mod))
-        lheritage = lexp.get_class_heritage(listify=True)
+        
+        try:
+            lexp = Explore(eval(mod))  
+            lheritage = lexp.get_class_heritage(listify=True)
+        except:
+            return (
+                no_update,
+                no_update,
+                no_update,
+                no_update,
+                no_update,          
+                [
+                    'Import Error.',
+                    f'{mod} is not currently available.'
+                ]
+            )
 
         return (
             lexp.status,
