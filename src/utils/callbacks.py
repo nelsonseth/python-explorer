@@ -206,7 +206,7 @@ def update_explore(n1, n2, n3, packages, status, member):
         prevent_initial_call=True,
 )
 def update_members(all_mems, value, choice):
-    if value == '':
+    if value == '' or len(all_mems) == 0:
         return all_mems
     else:
         filtered_flat = []

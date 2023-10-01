@@ -111,12 +111,12 @@ def getmembers_categorized(obj) -> dict:
     # Gather members from __all__ or inspection.
     # Ignoring and removing all dunders (__vars__ and _vars) for now. These 
     # do not serve a purpose in my current vision of this tool.
-    try:
-        public_members_names = [m for m in obj.__all__ if not m.startswith('_')]
-    except AttributeError:
-        public_members = [m for m in inspect.getmembers(obj) 
-                        if not m[0].startswith('_')]
-        public_members_names = [m[0] for m in public_members]
+    # try:
+    #     public_members_names = [m for m in obj.__all__ if not m.startswith('_')]
+    # except AttributeError:
+    public_members = [m for m in inspect.getmembers(obj) 
+                    if not m[0].startswith('_')]
+    public_members_names = [m[0] for m in public_members]
 
     modules = []
     classes = []
