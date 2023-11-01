@@ -1,3 +1,4 @@
+from typing import Any
 
 from dash import callback, Input, Output, State, ctx, no_update, ALL
 import dash_mantine_components as dmc
@@ -5,7 +6,12 @@ import dash_bootstrap_components as dbc
 
 # local
 from .explore import Explore, ExploreFromStatus
-from .packagelist import all_packages
+from .envdata import (
+    env_std_modules,
+    env_std_wrong_os,
+    env_site_packages,
+    all_packages,
+)
 
 # the nightmare that is figuring out relative imports
 import sys
@@ -25,28 +31,44 @@ from layouts.layout_utils import (
     get_tabs,
     publish_docstring,
     publish_signature,
-    publish_member_info
+    publish_member_info,
+    publish_package_info,
 )
 
 from layouts.cyto_utils import get_cytoscape
 
 
-# import all the things.
-# this is a bit heavy on the front end, but ensures each package is represented in this 
-# global namespace nicely, otherwise managing the namespaces later is a nightmare.
-#
-# This also means that running the app might be a little quicker after startup
-# because everything is already loaded... maybe?
-for p in all_packages:
-    try:
-        exec(f'import {p[1]}')
-    except:
-        pass
+class ImportedNamespace:
+    '''This is an internally managed list of imported names and objects. 
+    
+    Similar function to globals() or locals() but I needed more control.
+    '''
 
+    def __init__(self):
+        self.active = {}
+
+    def import_(self, module: str):
+        if module in self.active.keys():
+            pass
+        else:
+            try:
+                exec(f'import {module}')
+                self.active[f'{module}'] = eval(f'{module}')
+            except:
+                raise ImportError(f'Failed to import {module}.')
+
+    def get_module(self, module: str)-> Any:
+        if module in self.active.keys():
+            return self.active[f'{module}']
+        else:
+            self.import_(module)
+            return self.active[f'{module}']
+
+imports = ImportedNamespace()
 
 def _getexplore(status):
     '''Retrieve Explore instance from status.'''
-    root = eval(status['history'][0])
+    root = imports.get_module(status['history'][0])
     loc_explore = ExploreFromStatus(root, status)
     
     return loc_explore
@@ -67,31 +89,25 @@ def error_notify(data):
     return get_notification(data[0], data[1])
 
 
-# open and close drawer
 @callback(
-    Output(comp_id('drawer', 'drawer', 0), 'opened'),
-    Input(comp_id('burger', 'drawer', 0), 'n_clicks'),
+    Output(comp_id('p-accordion', 'packages', 0), 'value'),
     Input(comp_id('p-button', ALL, ALL), 'n_clicks'),
     prevent_initial_call=True,
 )
-def drawer_control(n1, n2):
-    id = ctx.triggered_id.comptype
-
-    if id == 'burger':
-        return True
-    elif id == 'p-button':
-        return False
+def package_dropdown_close(n):
+    return ''
 
 
 # resets current explore space based on package click (in drawer), clicking
 # on the 'explore more' button, or clicking on the trace navigation buttons
 @callback(
         Output(comp_id('status', 'app', 0), 'data'),
+        Output(comp_id('package-info', 'package', 0), 'children'),
         Output(comp_id('all-members', 'tabs', 0), 'data'),
         Output(comp_id('all-heritage', 'cyto', 0), 'data'),
         Output(comp_id('clickstate', 'app', 0), 'data', allow_duplicate=True),
         Output(comp_id('search-input', 'search', 0), 'value'),
-        Output(comp_id('notify-data', 'app', 0), 'data'),
+        Output(comp_id('notify-data', 'app', 0), 'data', allow_duplicate=True),
         Input(comp_id('p-button', ALL, ALL), 'n_clicks'),
         Input(comp_id('explore-button', 'tabs', 0), 'n_clicks'),
         Input(comp_id('t-button', 'trace', ALL), 'n_clicks'),
@@ -110,10 +126,26 @@ def update_explore(n1, n2, n3, packages, status, member):
         mod = packages[index]
         
         try:
-            lexp = Explore(eval(mod))  
+            try:
+                mod_import = env_std_modules[mod]['import_name']
+                doc_link = env_std_modules[mod]['homepage']
+                version = ''
+            except:
+                mod_import = env_site_packages[mod]['import_name']
+                doc_link = env_site_packages[mod]['homepage']
+                version = env_site_packages[mod]['version']
+
+            imports.import_(mod_import)
+
+            lexp = Explore(imports.get_module(mod_import)) 
+
             lheritage = lexp.get_class_heritage(listify=True)
+
+            package_info = publish_package_info(mod, version, doc_link)
+        
         except:
             return (
+                no_update,
                 no_update,
                 no_update,
                 no_update,
@@ -121,12 +153,13 @@ def update_explore(n1, n2, n3, packages, status, member):
                 no_update,          
                 [
                     'Import Error.',
-                    f'{mod} is not currently available.'
+                    f'Not able to access {mod}.'
                 ]
             )
 
         return (
             lexp.status,
+            package_info,
             [lexp.flatmembers, lexp.members],
             [list(lheritage.nodes), lheritage.heritage],
             ['package'],
@@ -137,12 +170,13 @@ def update_explore(n1, n2, n3, packages, status, member):
     elif id == 'explore-button':
 
         lexp = _getexplore(status)
-        flag = lexp.stepin(member)
+        ok = lexp.stepin(member)
 
-        if flag == 0:
+        if ok == True:
            lheritage = lexp.get_class_heritage(listify=True)
            return (
                lexp.status,
+               no_update,
                [lexp.flatmembers, lexp.members],
                [lheritage.nodes, lheritage.heritage],
                ['explore'],
@@ -150,36 +184,24 @@ def update_explore(n1, n2, n3, packages, status, member):
                no_update
             )
 
-        elif flag == 1:
+        elif ok == False:
             return(
+                no_update,
                 no_update,
                 no_update,
                 no_update,
                 no_update,
                 no_update,          
                 [
-                    'Exploration Complete.',
-                    f'No further members to explore in {member}'
-                ]
-            )
-        
-        elif flag == 2:
-            return(
-                no_update,
-                no_update,
-                no_update,
-                no_update,
-                no_update,          
-                [
-                    'Exploration Error.',
-                    f'{member} is not a valid member.'
+                    lexp._error.kind,
+                    lexp._error.msg
                 ]
             )
 
     elif id == 't-button':
 
         if all(n==0 for n in n3):
-            return [no_update]*4
+            return [no_update]*7
 
         index = ctx.triggered_id.index
         levels = len(status['history']) - index - 1
@@ -190,6 +212,7 @@ def update_explore(n1, n2, n3, packages, status, member):
 
         return (
             lexp.status,
+            no_update,
             [lexp.flatmembers, lexp.members],
             [lheritage.nodes, lheritage.heritage],
             ['trace'],
@@ -203,19 +226,33 @@ def update_explore(n1, n2, n3, packages, status, member):
         Input(comp_id('all-members', 'tabs', 0), 'data'),
         Input(comp_id('search-input', 'search', 0), 'value'),
         Input(comp_id('search-radio', 'search', 0), 'value'),
+        Input(comp_id('private-switch', 'tabs', 0), 'checked'),
         prevent_initial_call=True,
 )
-def update_members(all_mems, value, choice):
-    if value == '' or len(all_mems) == 0:
+def update_members(all_mems, value, choice, privates):
+    if len(all_mems) == 0:
         return all_mems
+    
+    if value == '':
+        if privates:
+            return all_mems
+        else:
+            filtered_flat = [m for m in all_mems[0] if not m[1].startswith('_')]
+            filtered_dict = get_filtered_dict(filtered_flat)
+            return [filtered_flat, filtered_dict]
     else:
+        if privates:
+            mems = all_mems[0]
+        else:
+            mems = [m for m in all_mems[0] if not m[1].startswith('_')]
+
         filtered_flat = []
         if choice == 'contains':
-            for flat in all_mems[0]:
+            for flat in mems:
                 if value.lower() in flat[1].lower():
                     filtered_flat.append(flat)
         elif choice == 'startswith':
-            for flat in all_mems[0]:
+            for flat in mems:
                 if flat[1].lower().startswith(value):
                     filtered_flat.append(flat)
 
@@ -284,6 +321,7 @@ def show_navigation(status):
     Output(comp_id('current-member-info', 'tabs', 0), 'children'),
     Output(comp_id('explore-button', 'tabs', 0), 'disabled'),
     Output(comp_id('clickstate', 'app', 0), 'data'),
+    Output(comp_id('notify-data', 'app', 0), 'data'),
     Input(comp_id('m-button', ALL, ALL), 'n_clicks'),
     Input(comp_id('status', 'app', 0), 'data'),
     State(comp_id('clickstate', 'app', 0), 'data'),
@@ -293,13 +331,13 @@ def show_navigation(status):
 def show_member_info(n1, status, clicked, filt_mems):
     
     lexp = _getexplore(status)
-    
+
     if clicked[0] in ['explore', 'trace', 'package']:
 
         member = status['history'][-1]
-        sig = lexp.getsignature()
-        doc = lexp.getdoc()
-        typ = lexp.gettype()
+        ok, sig = lexp.getsignature()
+        _, doc = lexp.getdoc()
+        _, typ = lexp.gettype()
         trace = status['trace']
         disable = True
         clickstate = ['member']
@@ -307,25 +345,39 @@ def show_member_info(n1, status, clicked, filt_mems):
     elif clicked[0] == 'member':
 
         if all(n==0 for n in n1):
-            return [no_update]*6
+            return [no_update]*7
 
         index = ctx.triggered_id.index
         member = filt_mems[0][index][1]
-        sig = lexp.getsignature(member)
-        doc = lexp.getdoc(member)
-        typ = lexp.gettype(member)
+        ok, sig = lexp.getsignature(member)
+        _, doc = lexp.getdoc(member)
+        _, typ = lexp.gettype(member)
         trace = '.'.join([status['trace'], member])
         disable = False
         clickstate = ['member']
 
-    return (
-        publish_signature(sig),
-        publish_docstring(doc),
-        member,
-        publish_member_info(trace, typ),
-        disable,
-        clickstate
-    )
+    format = 'rst'
+
+    if ok:
+        return (
+            publish_signature(sig),
+            publish_docstring(doc, format),
+            member,
+            publish_member_info(trace, typ),
+            disable,
+            clickstate,
+            no_update,
+        )
+    else:
+        return(
+            no_update,
+            no_update,
+            no_update,
+            no_update,
+            no_update,
+            no_update,
+            [lexp._error.kind, lexp._error.msg]
+        )
 
 # create cytoscape graph
 @callback(

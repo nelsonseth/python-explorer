@@ -8,115 +8,154 @@ from dash import html
 from .layout_utils import (
     comp_id,
     placeholder_text,
-    HEADER_COLOR,
-    BORDER_COLOR
+    get_package_accordion,
+    BORDER_COLOR,
+    HEADER_COLOR_DARK,
+    HEADER_COLOR_LIGHT,
 )
+
+# the nightmare that is figuring out relative imports
+import sys
+from pathlib import Path
+sys.path.append(Path(__file__).parent.parent)
+
+from utils.envdata import (
+    env_site_packages,
+    env_std_modules,
+    env_std_wrong_os,
+    all_packages,
+)
+
 
 # 'border':f'1px solid {BORDER_COLOR}',
 
 # list of dbc.Col() items to place in children of header row
 header_content = [
     dbc.Col(
-        dmc.Group([
-            dmc.ActionIcon(
-                DashIconify(
-                    icon='iconamoon:menu-burger-horizontal',
-                    color='black',
+        get_package_accordion(all_packages, env_std_modules, env_site_packages),
+        width=3,
+        style={
+            'height':'100%',
+            'margin':'0',
+            'padding':'0.5em 0.5em 0 0.5em',
+            #'border':'1px solid black',
+        }
+    ),
+    dbc.Col([
+        dbc.Row(
+            placeholder_text('Current Package'),
+            id=comp_id('package-info', 'package', 0),
+            style={
+                'height':'65%',
+                'width':'100%',
+                'margin':'0',
+                'padding':'0.5em',
+                #'border':'1px solid black',
+            }
+        ),
+        dbc.Row(
+            placeholder_text('Explorer Navigation'),
+            id=comp_id('t-breadcrumbs','trace', 0),
+            style={
+                'height':'35%',
+                'width':'100%',
+                'margin':'0',
+                'padding':'0.25em 0 0 0.5em',
+                #'border':'1px solid black',
+            }
+        ),
+        ],
+        width=6,
+        style={
+            'height':'100%',
+            'margin':'0',
+            'padding':'0 0 0 0',
+            #'border':'1px solid black',
+        },
+    ),
+    dbc.Col(
+        dmc.Stack([
+            dmc.Group([
+                dmc.ThemeIcon(
+                    DashIconify(
+                        icon='logos:python',
+                        style={
+                            'height':'2em',
+                            'width':'2em',
+                        }
+                    ),
                     style={
-                        'height':'2.5em',
-                        'width':'2.5em',
+                        'background-color':'transparent',
                     }
                 ),
-                variant='light',
-                id=comp_id('burger', 'drawer', 0),
-                style={
-                    'height':'2.5em',
-                    'width':'2.5em',
-                    'background-color':HEADER_COLOR,
-                    'margin-top':'0.2em',
-                    'padding':'0',
-                }
-            ),
-            html.Div(
-                style={
-                    'width':'0.5em',
-                    'margin':'0',
-                    'padding':'0',
-                }
-            ),
-            dmc.ThemeIcon(
-                DashIconify(
-                    icon='devicon:python',
+                dmc.Text(
+                    'python explorer',
+                    align='center',
+                    color='#ffffff',
                     style={
-                        'height':'1.5em',
-                        'width':'1.5em',
+                        'font-family':'Arial, sans-serif',
+                        'font-size':'1.8em',
+                        'font-weight':'700',
                     }
                 ),
-                style={
-                    'background-color':HEADER_COLOR,
-                }
+                ],
+                position='right',
+                spacing=4,
             ),
-            dmc.Text(
-                'Python Explorer',
-                align='center',
-                style={
-                    'font-size':'1.2em',
-                    'font-weight':'700',
-                }
+            dmc.Group([
+                dmc.Text(
+                    'About:',
+                    italic=True,
+                    color='#ffffff',
+                    style={
+                        'font-family':'Arial, sans-serif',
+                        'font-size':'1em',
+                        'font-weight':'400',
+                    }
+                ),
+                dmc.NavLink(
+                    icon=DashIconify(
+                        icon='devicon:github',
+                        style={
+                            'height':'2em',
+                            'width':'2em',
+                        }
+                    ),
+                    href='https://github.com/nelsonseth/python-explorer',
+                    # variant = 'light',
+                    style={
+                        'height':'2.3em',
+                        'width':'2.3em',
+                        'padding':'0.1em',
+                        'margin':'0',
+                        'border-top-left-radius':'8px',
+                        'border-top-right-radius':'8px',
+                        'border-bottom-left-radius':'8px',
+                        'border-bottom-right-radius':'8px',
+                        #'border':'1px solid black',
+                        #'background-color':'transparent',
+                        'background-color':HEADER_COLOR_LIGHT,
+                    }
+                ),
+                ],
+                position='right',
+                spacing=6,
             ),
             ],
-            position='left',
-            spacing=2,
+            #align='flex-end',
+            justify='space-between',
+            style={
+                #'border':'1px solid black',
+                'height':"100%"
+            },
         ),
         width=3,
         style={
             'height':'100%',
             'margin':'0',
-            'padding':'0 0 0 1em',
-        }
-    ),
-    dbc.Col(
-        placeholder_text('Explorer Navigation'),
-        id=comp_id('t-breadcrumbs','trace', 0),
-        width=7,
-        style={
-                'height':'100%',
-                'margin':'0',
-                'padding':'0.5em 0 0 10px',
-            }
-    ),
-    dbc.Col(
-        dmc.Group([
-            dmc.Text(
-                'About:',
-                weight=600,
-            ),
-            dmc.NavLink(
-                icon=DashIconify(
-                    icon='devicon:github',
-                    style={
-                        'height':'2.2em',
-                        'width':'2.2em',
-                    }
-                ),
-                href='https://github.com/nelsonseth/python-explorer',
-                variant = 'subtle',
-                style={
-                    'height':'2.2em',
-                    'width':'2.2em',
-                    'padding':'0',
-                    'background-color':HEADER_COLOR,
-                }
-            ),
-            ],
-            position='right',
-            spacing=6,
-        ),
-        width=2,
-        style={
-            'height':'100%',
-            'margin':'0',
-            'padding':'0.35em 1em 0 0',  
+            'padding':'0.25em 1em 0.5em 0',
+            'position':'relative', 
+            #'border':'1px solid black', 
         }
     ),
 ]

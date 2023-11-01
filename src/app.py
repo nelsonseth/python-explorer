@@ -1,11 +1,11 @@
 
 from dash import Dash, html
                  
-import dash_bootstrap_components as dbc
+# import dash_bootstrap_components as dbc
 import dash_mantine_components as dmc
 
 # locals
-from layouts import comp_id, page_layout, drawer, stores
+from layouts import comp_id, page_layout, stores
 from utils import callbacks
 
 def serve_layout():
@@ -14,7 +14,6 @@ def serve_layout():
             [
                 html.Div(id=comp_id('notifier', 'app', 0)),
                 page_layout,
-                drawer,
                 stores,  
             ],
             style={
@@ -25,14 +24,16 @@ def serve_layout():
                 }
         ),
         position='top-right',
-        autoClose=2000,
+        autoClose=2500,
     )
 
-
+# Static external bootstrap stylesheet located in /assets folder.
+# This is why `external_stylesheets=[dbc.themes.BOOTSTRAP]` is not needed
+# below.
 app = Dash(
     __name__,
-    external_stylesheets=[dbc.themes.BOOTSTRAP],
-    title='Python Explorer',
+    #external_stylesheets=[dbc.themes.BOOTSTRAP],
+    title='python explorer',
     suppress_callback_exceptions=True,
 )  
 

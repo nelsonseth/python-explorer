@@ -5,9 +5,10 @@ from dash_iconify import DashIconify
 
 from .layout_utils import (
     comp_id,
-    HEADER_COLOR,
     PAPER_BCOLOR,
     BORDER_COLOR,
+    HEADER_COLOR_DARK,
+    HEADER_COLOR_LIGHT,
 )
 
 from .header import header_content
@@ -20,9 +21,10 @@ page_layout = dbc.Container([
     dbc.Row(
         children=header_content,
         align='center',
-        justify='around',
+        justify='start',
+        #class_name='g-0',
         style={
-            'height':'3em',
+            'height':'8em',
             'width':'100%',
             'margin':'0',
             'padding':'0',
@@ -31,7 +33,8 @@ page_layout = dbc.Container([
             'border-right':f'1px solid {BORDER_COLOR}',
             'border-top-left-radius':'10px',
             'border-top-right-radius':'10px',
-            'background-color':HEADER_COLOR,
+            'background-image':f'linear-gradient(to right, {HEADER_COLOR_DARK} 5%, {HEADER_COLOR_LIGHT} 35%, {HEADER_COLOR_LIGHT} 75%, {HEADER_COLOR_DARK} 95%)',
+            'z-index':1000,
         }
     ),
     dbc.Row([
@@ -128,7 +131,7 @@ page_layout = dbc.Container([
                     id=comp_id('body-right-tabs', 'app', 0),
                     value='member-information',
                     variant='default',
-                    color='green',
+                    color='blue',
                     orientation='horizontal',
                     style={
                         'background-color':PAPER_BCOLOR,
@@ -161,7 +164,7 @@ page_layout = dbc.Container([
         ],
         align='center',
         style={
-            'height':'calc(100vh - 20px - 3em)',
+            'height':'calc(100vh - 20px - 8em)',
             'min-height':'600px',
             'width':'100%',
             'margin':'0',
@@ -173,7 +176,7 @@ page_layout = dbc.Container([
     style={
         'height':'100vh',
         'width':'100vw',
-        'min-width':'1000px',
+        'min-width':'1100px',
         'margin':'0',
         'padding':'5px 15px 15px 15px',
     }

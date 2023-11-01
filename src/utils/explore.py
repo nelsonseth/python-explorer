@@ -21,22 +21,17 @@
 '''core functionality for Explore class'''
 
 __all__ = [
-    # classes
-    'AttributeDict', 'Explore', 'ExploreFromStatus'
-    
-    # functions
-    'isproperty', 'getmembers_categorized',
-    
-    # Helper functions
-    '_getmember_counts', '_flat_members', '_sig_format', '_build_class_heritage'
+    'Explore',
+    'ExploreFromStatus',
 ]
 
 __author__ = ('Seth M. Nelson <github.com/nelsonseth>')
 
-# The bulk of the heavy lifting here is already covered by inspect.
 import inspect
+import pkgutil
+import sys
 from warnings import warn
-from typing import Union
+from typing import Union, Any
 
 #------------------------------------------------------------------------------
 
@@ -55,68 +50,71 @@ def isproperty(obj) -> bool:
             hasattr(obj, 'deleter'))
 
 
-_IGNORE = [
-    'False',
-    'None',
-    'True',
-    'and',
-    'as',
-    'assert',
-    'async',
-    'await',
-    'break',
-    'class',
-    'continue',
-    'def',
-    'del',
-    'elif',
-    'else',
-    'except',
-    'finally',
-    'for',
-    'from',
-    'global',
-    'if',
-    'import',
-    'in',
-    'is',
-    'lambda',
-    'nonlocal',
-    'not',
-    'or',
-    'pass',
-    'raise',
-    'return',
-    'try',
-    'while',
-    'with',
-    'yield',
+_ignore_sugar = [
+    'False', 'None', 'True', 'and', 'as', 'assert', 'async', 'await', 'break',
+    'class', 'continue', 'def', 'del', 'elif', 'else', 'except', 'finally',
+    'for', 'from', 'global', 'if', 'import', 'in', 'is', 'lambda', 'nonlocal',
+    'not', 'or', 'pass', 'raise', 'return', 'try', 'while', 'with', 'yield',
 ]
 
 
-def getmembers_categorized(obj) -> dict:
-    '''Return categorized public members of a given object to a dictionary.
+# ignored is comprised of builtins, stdlib names, and syntactic sugars
+# and also 'test' variations
+def _get_ignored_listing():
+    ignored = set(sys.builtin_module_names)
+    ignored.update(sys.stdlib_module_names)
+    ignored.update(_ignore_sugar)
+    ignored.update(['test', 'tests', 'testing'])
+    return ignored
+
+_ignored_listing = _get_ignored_listing()
+
+
+def getmembers_categorized(obj: Any)-> tuple[dict, set]:
+    '''Return categorized members of a given object.
     
-    Dictionary output containing five categories:
-        - modules
-        - classes
-        - functions
-        - properties
-        - others (a catch-all bin)    
+    Parameters
+    ----------
+    obj: object
+        The object to inspect.
+
+    Returns
+    ------
+    members: dict
+        * Dictionary output containing five categories:
+            - modules
+            - classes
+            - functions
+            - properties
+            - others (a catch-all bin)
+
+    inactive modules: set
+        A set of submodules found that are not yet active. For objects that
+        are not a package, this will just return set().
     '''
-    # In the local function namespace, 'obj' will always eval to the 
-    # desired object because we assigned it as such.
     objstr = 'obj'
 
-    # Gather members from __all__ or inspection.
-    # Ignoring and removing all dunders (__vars__ and _vars) for now. These 
-    # do not serve a purpose in my current vision of this tool.
-    # try:
-    #     public_members_names = [m for m in obj.__all__ if not m.startswith('_')]
-    # except AttributeError:
-    public_members = [m for m in inspect.getmembers(obj) 
-                    if not m[0].startswith('_')]
-    public_members_names = [m[0] for m in public_members]
+    # Ignores dunders but includes private members
+    # Displaying private members or not in the interface will be a user option.
+    members = set([
+        m[0] for m in inspect.getmembers(obj) 
+        if m[0] not in _ignored_listing
+        and not m[0].startswith('__')
+    ])
+
+    try:
+        inactive_mods = set([
+            p.name for p in pkgutil.iter_modules(obj.__path__)
+            if p.name not in _ignored_listing
+            and not p.name.startswith('__')
+        ])
+        # mod_diff is a list of still inactive sub-modules. 
+        # Return for use ref use later.
+        mod_diff = inactive_mods.difference(members)
+
+        members.update(mod_diff)
+    except:
+        mod_diff = set()
 
     modules = []
     classes = []
@@ -124,16 +122,12 @@ def getmembers_categorized(obj) -> dict:
     properties = []
     others = []
 
-    for name in public_members_names:
-        
-        # ignore any programmatical ref words (True, for, if, not,... etc.)
-        # I don't know the actual name for these items, but they won't work as
-        # a member object. 
-        if name not in _IGNORE:
-        
-            # eval string built from obj.itemname
-            itemstr = f'{objstr}.{name}'
+    for name in members:
+         
+        # eval string built from obj.itemname
+        itemstr = f'{objstr}.{name}'
 
+        if hasattr(obj, name):
             # identify imported modules if obj is module.
             if inspect.ismodule(eval(itemstr)):
                 modules.append(name)
@@ -161,10 +155,12 @@ def getmembers_categorized(obj) -> dict:
             # bin anything else into 'others' for now.
             else:
                 others.append(name)
-
+        else:
+            modules.append(name)
+        
     # Return dictionary of sorted name lists.  
-    return AttributeDict(
-            {
+    out_dict = AttributeDict(
+        {
             'modules': sorted(modules),
             'classes': sorted(classes),
             'functions': sorted(functions),
@@ -172,6 +168,7 @@ def getmembers_categorized(obj) -> dict:
             'others': sorted(others)
         }
     )
+    return out_dict, mod_diff
 
 
 def _getmember_counts(members: dict) -> dict:
@@ -295,6 +292,9 @@ class Explore():
         # internal join of history list 
         self._trace = self._history[0]
 
+        # error tracking (kind, msg)
+        self._error = AttributeDict({'kind':'', 'msg':''})
+
         # grab intial member set of inputed object.
         self._updatemembers()
 
@@ -303,19 +303,28 @@ class Explore():
         '''Internal helper method.
         
         Check if member string is in current member list.
+
+        Activate inactive submodules if necessary.
         '''
         # create simple list of current member names only
         members = [m[1] for m in self._flatmembers]
 
         if member not in members:
-            raise AttributeError(
-                f"'{member}' is not a public member of '{self._trace}'"
-            )
+            self._error.kind = 'Invalid Member'
+            self._error.msg = f"'{member}' is not a valid member of '{self._trace}'"
+            return False
         else:
-            return True
+            if member in self._inactive_mods:
+                try:
+                    exec(f'import {self._trace}.{member}')
+                    self._inactive_mods.remove(member)
+                except:
+                    self._error.kind = 'Import Error'
+                    self._error.msg = f'Unable to access {self._trace}.{member}'
+                    return False
+        return True
 
-
-    def _updatemembers(self) -> int:
+    def _updatemembers(self) -> bool:
         '''Internal helper method.
         
         Update current member listing for target object exploration.
@@ -326,35 +335,34 @@ class Explore():
         # some objects fail to retrieve any members. This could be because the
         # code is faulty or the module is deprecated or other reasons.
         try:
-            self._members = getmembers_categorized(eval(obj_str))
+            self._members, self._inactive_mods = getmembers_categorized(eval(obj_str))
             self._membercounts = _getmember_counts(self._members)
             self._flatmembers = _flat_members(self._members)
         
             # if no new members, back out and return to previous parent.
             if len(self._flatmembers) == 0:
             
-                # this is a simple warning for now. Need to figure out a better
-                # way to send a message to dash interface. TODO
-                warn(f'{self._trace} has no further members to explore.')
-            
+                self._error.kind = 'Exploration Complete'
+                self._error.msg = f'{self._trace} has no further members to explore.'
+
                 # recursive return to previous
                 self._updatehistory('out')
                 self._updatemembers()
 
-                return 1 # no members flag
-        
-            return 0 # no flag
+                return False
+
+            return True
 
         except AttributeError:
-            # again, simple warning for now if member retrieval failed.
-            # TODO figure out better message for dash interface
-            warn(f"Member retrieval failed for '{self._trace}'")
+
+            self._error.kind = 'Attribute Error'
+            self._error.msg = f"Member retrieval failed for '{self._trace}'"
 
             # recursive return to previous.
             self._updatehistory('out')
             self._updatemembers()
 
-            return 2 # invalid member flag
+            return False
            
 
     def _updatehistory(self, 
@@ -398,16 +406,16 @@ class Explore():
                 self._trace = '.'.join(self._history)
             
             
-    def stepin(self, member: str) -> None:
+    def stepin(self, member: str) -> bool:
         '''Step in to a member.
         
         Member string must be from current member listing.
         '''
-        self._checkmember(member)
-
-        self._updatehistory('in', member)
-
-        return self._updatemembers()
+        if self._checkmember(member):
+            self._updatehistory('in', member)
+            return self._updatemembers()
+        else:
+            return False
 
     
     def stepout(self, levels: int = 1) -> None:
@@ -422,54 +430,57 @@ class Explore():
             self._updatemembers()
 
     
-    def getdoc(self, member: Union[str,None] = None, printed: bool = False) -> None:
+    def getdoc(self, member: Union[str,None] = None) -> tuple:
         '''Return docstring of current object or member of object.'''
-        if member and self._checkmember(member):
-            obj_str = f'{self._refhistory[-1]}.{member}'
-        else:
-            obj_str = self._refhistory[-1]
-
-        if printed:
-            return print(inspect.getdoc(eval(obj_str)))
-        else:
-            return inspect.getdoc(eval(obj_str))
+        
+        check = True
+        obj_str = self._refhistory[-1]
+        
+        if member:
+            check = self._checkmember(member)
+            if check:
+                obj_str = f'{self._refhistory[-1]}.{member}'
+    
+        return check, inspect.getdoc(eval(obj_str))
     
 
-    def getsignature(self, member: Union[str,None] = None, printed: bool = False) -> Union[str, None]:
+    def getsignature(self, member: Union[str,None] = None) -> tuple:
         '''Return signature of current object or member of object.'''
-        if member and self._checkmember(member):
-            obj_str = f'{self._refhistory[-1]}.{member}'
-        else:
-            obj_str = self._refhistory[-1]
+        
+        check = True
+        obj_str = self._refhistory[-1]
+        
+        if member:
+            check = self._checkmember(member)
+            if check:
+                obj_str = f'{self._refhistory[-1]}.{member}'
 
         try:
             sig = inspect.signature(eval(obj_str)).__str__()
         except:
              #return 'No signature available.'
-             return None
-        
-        if printed:
-            return print(_sig_format(sig))
-        else:
-            return _sig_format(sig)
+             return check, None
+
+        return check, _sig_format(sig)
         
 
-    def gettype(self, member: Union[str,None] = None, printed: bool = False)-> Union[str, None]:
+    def gettype(self, member: Union[str,None] = None)-> tuple:
         '''Return type of current object or member of object.'''
-        if member and self._checkmember(member):
-            obj_str = f'{self._refhistory[-1]}.{member}'
-        else:
-            obj_str = self._refhistory[-1]
+        
+        check = True
+        obj_str = self._refhistory[-1]
+        
+        if member:
+            check = self._checkmember(member)
+            if check:
+                obj_str = f'{self._refhistory[-1]}.{member}'
 
         try:
             member_type = type(eval(obj_str)).__name__
         except:
-             return None
-        
-        if printed:
-            return print(member_type)
-        else:
-            return member_type
+             return check, None
+
+        return check, member_type
         
 
     def get_class_heritage(self,
@@ -598,7 +609,7 @@ class Explore():
             * Keys:
                 * 'refhistory': list of internal reference call strings
                 * 'history': list of the 'nice' names of the references
-                * 'trace': a '.'join() of history elements
+                * 'trace': a ``'.'.join()`` of history elements
         
         '''
         return {
@@ -618,8 +629,8 @@ class ExploreFromStatus(Explore):
 
         Parameters
         ----------
-        root: obj
-            The original parent obj of the current status. This is typically the
+        root: object
+            The original parent object of the current status. This is typically the
             module represented by status['history'][0]
         status: dict
             This is the dict created from Explore.status
@@ -635,6 +646,8 @@ class ExploreFromStatus(Explore):
         self._history = status['history']
 
         self._trace = status['trace']
+
+        self._error = AttributeDict({'kind':'', 'msg':''})
 
         self._updatemembers()
 

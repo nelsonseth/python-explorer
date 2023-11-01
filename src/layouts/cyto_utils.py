@@ -159,9 +159,9 @@ layout_options = {
     'dagre':'Dagre (top-down)',
     'euler':'Euler (clusters)',
     'cola':'Cola (cleaner clusters)',
+    'klay':'Klay (left-right)',
     'spread':'Spread (fill the region)',
     'breadthfirst':'Breadthfirst (large tree structure)',
-    'klay':'Klay (left-right)',
     'circle':"Circle (it's a circle, chaotic)",
     'grid':'Grid (grid layout, chaotic)',
 }

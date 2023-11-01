@@ -78,7 +78,34 @@ body_left = dmc.Card([
             'overflow':'auto',
         }
     ),
-
+    dmc.Group([
+        dmc.Text(
+            'Include Private Members ',
+            italic=True,
+            color='#5a5a5a',
+            style={
+                'font-size':'0.8em',
+                'font-weight':'400',
+                'padding':'0 0 2px 0',
+            }
+        ),
+        dmc.Switch(
+            id=comp_id('private-switch', 'tabs', 0),
+            size='sm',
+            radius='lg',
+            checked=False,
+        ),
+        ],
+        position='center',
+        spacing=4,
+        noWrap=True,
+        align='end',
+        style={
+            'position':'absolute',
+            'bottom':'6px',
+            'right':'6px',
+        }
+    ),
     ],
     radius=0,
     shadow='lg',
@@ -88,6 +115,7 @@ body_left = dmc.Card([
         'border-bottom-left-radius':'10px',
         'height':'100%',
         'width':'100%',
+        'position':'relative',
         'margin':'0',
         'padding':'0',
         'background-color':PAPER_BCOLOR,

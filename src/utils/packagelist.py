@@ -2,7 +2,15 @@
 
 from pathlib import Path
 
-groups = ['standard', 'common', 'app']
+from .envdata import (
+    env_std_modules,
+    env_std_wrong_os,
+    env_site_packages,   
+)
+
+# groups = ['standard', 'common', 'app']
+groups = ['standard', 'site']
+
 
 # need to make an extended list for sklearn. Their init configuration does not 
 # directly load the individual modules
@@ -47,27 +55,46 @@ sk_learn_modules = [
 ]
 
 
-def get_packages(groups: list) -> list:
+# def get_packages(groups: list) -> list:
 
-    all_packages = []
-    for group in ['standard', 'common', 'app']:
-        if group == 'standard':
-            # potential expansion to allow for other standard listings for other
-            # python versions.... but just leaving it as 3.10 for now.
-            version = '310'
-            path = Path(__file__).parent.parent/'assets'/f'{group}_packs_{version}.txt'
-        else:
-            path = Path(__file__).parent.parent/'assets'/f'{group}_packs.txt'
+#     all_packages = []
+#     for group in groups:
+#         if group == 'standard':
+#             # potential expansion to allow for other standard listings for other
+#             # python versions.... but just leaving it as 3.10 for now.
+#             version = '310'
+#             path = Path(__file__).parent.parent/'assets'/f'{group}_packs_{version}.txt'
+#         else:
+#             path = Path(__file__).parent.parent/'assets'/f'{group}_packs.txt'
 
-        packs = open(path).read()
+#         packs = open(path).read()
     
-        for n in packs.splitlines():
-            if n == 'sklearn':
-                sk_learn_list = [(f'{group}', f'sklearn.{m}') for m in sk_learn_modules]
-                all_packages.extend(sk_learn_list)
-            else:
-                all_packages.append((f'{group}', n))
+#         for n in packs.splitlines():
+#             if n == 'sklearn':
+#                 sk_learn_list = [(f'{group}', f'sklearn.{m}') for m in sk_learn_modules]
+#                 all_packages.extend(sk_learn_list)
+#             else:
+#                 all_packages.append((f'{group}', n))
         
+#     return all_packages
+
+# all_packages = get_packages(groups)
+
+def get_packages(standards: dict, site: dict):
+    
+    all_packages = []
+    
+    stds = list(standards.keys())
+    sites = list(site.keys())
+
+    stds.sort(key=str.lower)
+    sites.sort(key=str.lower)
+
+    for p in stds:
+        all_packages.append(('standard', p))
+    for p in sites:
+        all_packages.append(('site', p))
+
     return all_packages
 
-all_packages = get_packages(groups)
+all_packages = get_packages(env_std_modules, env_site_packages)

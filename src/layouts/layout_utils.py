@@ -16,21 +16,16 @@ sys.path.append(Path(__file__).parent.parent)
 # utils is two levels up
 from utils.explore import AttributeDict
 
-
 # Common Settings--------------------------------------------------------------
 
-PAPER_BCOLOR = '#fbfbf0'
-HEADER_COLOR = '#83fc95'
+PAPER_BCOLOR = '#f9f9f9'
 BORDER_COLOR = '#a7a7a7'
 
-# common kwargs for dmc.Button components
-# button_kwargs = {
-#     'n_clicks':0,
-#     'size':'sm',
-#     'compact':True,
-#     'variant':'subtle',
-#     'radius':'md',
-# }
+HEADER_COLOR_LIGHT = '#bbd4e9'
+HEADER_COLOR_DARK = '#3776AB'
+
+ACCORDION_LIGHT = '#d6e5f2'
+ACCORDION_DARK = '#bbd4e9'
 
 # Helper Functions-------------------------------------------------------------
 
@@ -71,13 +66,12 @@ def get_package_buttons(
     '''Return list of buttons for packages.
     
     * namelist - flattened list of (group, package) tuples
-    * color - color of buttons
     '''
     return [
         dmc.Button(
             children = n[1],
             id = comp_id('p-button', n[0], namelist.index(n)),
-            color='green',
+            color='blue',
             n_clicks=0,
             size='sm',
             radius='md',
@@ -87,13 +81,247 @@ def get_package_buttons(
     ]
 
 
+def get_package_button_stack(
+    button_list: list,
+    package_info: dict,
+    group: str
+    ) -> dmc.Stack:
+
+    button_list_group = [b for b in button_list if b.id['group'] == group]
+
+    stack_list=[]
+    for bb in button_list_group:
+        stack_list.append(
+            dbc.Row([
+                dbc.Col(
+                    bb,
+                    width=3,
+                    align='center',
+                    style={
+                        'height':'100%',
+                        'padding-left':'0.5em',
+                        'border-right':f'1px solid {BORDER_COLOR}'
+                    }
+                ),
+                dbc.Col(
+                    dmc.Text(
+                        f'{package_info[bb.children]["summary"]}',
+                        italic=True,
+                        truncate=True,
+                    ),
+                    width=8,
+                    align='center',
+                    style={
+                        'height':'100%',
+                        'padding-left':'1em'
+                    }
+                ),
+                ],
+                class_name='g-0',
+                style={
+                    'width':'100%',
+                    'max-width':'100%',
+                }
+            )
+        )
+
+    return dmc.Stack(
+        children = stack_list,
+        align='flex-start',
+        justify='flex-start',
+        spacing='xs',
+    )
+
+
+def get_package_accordion(
+    packages: list,
+    std_package_info: dict,
+    site_package_info: dict,
+    )-> dmc.Accordion:
+
+    button_list = get_package_buttons(packages)
+
+    return dmc.Accordion([
+        dmc.AccordionItem(
+            [
+                dmc.AccordionControl(
+                    'Standard Modules',
+                    style={
+                        'background-image':f'linear-gradient({ACCORDION_LIGHT} 20%, {ACCORDION_DARK} 80%)',
+                        'border-top-left-radius':'5px',
+                        'border-top-right-radius':'5px',
+                    },
+                
+                ),
+                dmc.AccordionPanel(
+                    dmc.Paper(
+                        children=get_package_button_stack(
+                            button_list,
+                            std_package_info,
+                            group='standard',
+                            ),
+                        style={
+                            'height':'100%',
+                            'padding-top':'0.5em',
+                            'padding-bottom':'0.5em',
+                            'border':f'1px solid {BORDER_COLOR}',
+                            'background-color':PAPER_BCOLOR,
+                        }
+                    ),
+                    style={
+                        'height':'70vh',
+                        'max-height':'70vh',
+                        'width':'60vw',
+                        'min-width':'600px',
+                        'margin':'auto',
+                        'overflow':'auto',
+                        'background-image':f'linear-gradient({ACCORDION_LIGHT} 20%, {ACCORDION_DARK} 80%)',
+                        'border':f'1px solid {BORDER_COLOR}',
+                        'border-bottom-right-radius':'6px',
+                        'border-bottom-left-radius':'6px',
+                        'border-top-right-radius':'6px',
+                        #'zIndex':999,
+                    },
+                )
+            ],
+            value='standard', 
+            style={
+                #'height':'3em',
+            }  
+        ),
+        dmc.AccordionItem(
+            [
+                dmc.AccordionControl(
+                    'Site-Packages',
+                    style={
+                        'background-image':f'linear-gradient({ACCORDION_LIGHT} 20%, {ACCORDION_DARK} 80%)',
+                        'border-bottom':f'1px solid {ACCORDION_DARK}'
+                    },
+                ),
+                dmc.AccordionPanel(
+                    dmc.Paper(
+                        children=get_package_button_stack(
+                            button_list,
+                            site_package_info,
+                            group='site',
+                            ),
+                        style={
+                            'height':'100%',
+                            'padding-top':'0.5em',
+                            'padding-bottom':'0.5em',
+                            'border':f'1px solid {BORDER_COLOR}',
+                            'background-color':PAPER_BCOLOR,
+                        }
+                    ),
+                    style={
+                        'height':'70vh',
+                        'max-height':'70vh',
+                        'width':'60vw',
+                        'min-width':'600px',
+                        'margin':'auto',
+                        'overflow':'auto',
+                        'background-image':f'linear-gradient({ACCORDION_LIGHT} 20%, {ACCORDION_DARK} 80%)',
+                        'border':f'1px solid {BORDER_COLOR}',
+                        'border-bottom-right-radius':'6px',
+                        'border-bottom-left-radius':'6px',
+                        'border-top-right-radius':'6px',
+                        #'zIndex':1000,
+                    },
+                )
+            ],
+            value='site',
+            style={
+                #'height':'3em',
+                'border-bottom':f'1px solid {ACCORDION_DARK}'
+            }   
+        ),
+        ],
+        id=comp_id('p-accordion', 'packages', 0),
+        #variant='filled',
+        radius='md',
+        style={
+            #'width':'50%',
+            #'border':f'1px solid {BORDER_COLOR}',
+            #'background-color':PAPER_BCOLOR,
+            #'background-image':f'linear-gradient(#bbd4e9 50%, #d6e5f2 50%)',
+            'position':'relative',
+            'zIndex':999,
+        }
+    )
+
+
+def publish_package_info(
+    mod: str,
+    version: str,
+    link: Union[str, None]
+    )-> dmc.Stack:
+
+    if link == None or link == 'UNKNOWN' or link == '':
+        href = dmc.Text(
+            'Not found.',
+        )
+    else:
+        href = dmc.Anchor(
+            link,
+            href=link,
+            color='blue',
+            truncate=True,
+            style={
+                'font-size':'1em',
+                'font-weight':'500',
+            }
+        )
+
+    return dmc.Stack([
+        dmc.Group([
+            dmc.Text(
+                mod,
+                style={
+                    'font-size':'1.5em',
+                    'font-weight':'700'
+                }
+            ),
+            dmc.Text(
+                f'{version}',
+                italic=True,
+                style={
+                    'font-size':'0.8em',
+                    'font-weight':'550',
+                }
+            ),
+            ],
+            align='center',
+            spacing=10,
+            position='center',
+        ),
+        dmc.Group([
+            dmc.Text(
+                'Homepage: ',
+                italic=True,
+                truncate=True,
+                style={
+                    'font-size':'1em',
+                    'font-weight':'550',
+                },               
+            ),
+            href,
+        ],
+        align='center',
+        position='left',
+        noWrap=True,
+        spacing=4,
+    )
+    ],
+    spacing=6,
+)
+
+
 def get_trace_buttons(
     namelist: list,
     ) -> list:
     '''Return list of buttons for trace.
     
     * namelist - list of strings (from trace history)
-    * color - color of button
     '''
     return [
         dmc.Button(
@@ -121,7 +349,6 @@ def get_member_buttons(
     
     * namelist - flattened list of (key, member) tuples
     * group - active tab name
-    * color - color of button
     '''
     return [
         dmc.Button(
@@ -168,6 +395,10 @@ def get_trace_group(tracebuttons: list)-> dmc.Group:
             'You are exploring:  ',
             italic=True,
             truncate=True,
+            style={
+                'font-size':'1em',
+                'font-weight':'500',
+            }
         ),
         tracebuttons[0]]
     
@@ -270,16 +501,19 @@ def publish_signature(sig: Union[str, None]) -> Union[dmc.Center, Purify]:
         return Purify(sig_html)
 
 
-def publish_docstring(doc: Union[str, None]) -> Union[dmc.Center, Purify]:
+def publish_docstring(doc: Union[str, None], format: Union[str, None]=None) -> Union[dmc.Center, Purify]:
     '''Return Purify component for docstring.'''
     if doc == None:
         return placeholder_text('No docstring available.')
     else:
+        if format == None:
+            format = 'rst'
         doc_html = convert_text(doc,
-                                format='rst',
+                                format=format,
                                 to='html5',
                                 extra_args=[
                                         '--webtex',
+                                        '--wrap=preserve',
                                     ],
                                 )
         return Purify(doc_html)
