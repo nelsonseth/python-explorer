@@ -5,16 +5,14 @@ from dash import dcc, html
 from .layout_utils import comp_id
 
 # the nightmare that is figuring out relative imports
-import sys
-from pathlib import Path
-sys.path.append(Path(__file__).parent.parent)
+# import sys
+# from pathlib import Path
+# sys.path.append(Path(__file__).parent.parent)
 
 # utils is two levels up
-from utils.packagelist import all_packages
+from python_explorer.utils.envdata import all_packages
 
-# master list of available package names within drawer.
-# this is the same for all users, unless run locally and they want to add their own
-loaded_packs = [p[1] for p in all_packages]
+packs = [p[1] for p in all_packages]
 
 stores = html.Div(
     [  
@@ -24,9 +22,9 @@ stores = html.Div(
             data=[]
         ),
         dcc.Store(
-            id=comp_id('packages', 'drawer', 0),
+            id=comp_id('packages', 'accordion', 0),
             storage_type='memory',
-            data=loaded_packs,
+            data=packs,
         ),
         dcc.Store(
             id=comp_id('status', 'app', 0),

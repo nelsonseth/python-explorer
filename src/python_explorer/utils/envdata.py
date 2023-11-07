@@ -80,10 +80,7 @@ _pkgs_exclude = {
     'argon2-cffi-bindings', # this one is weird. TODO: look into more.
     'wincertstore', # deprecated
     'docutils', # cli 
-    #'PySocks', # may add in specific exceptions as I find them. Correct answer is 'socks'
     'fonttools', # this is a package of libraries, some are cli
-    #'PyQt5', # not finding import. another candidate for exceptions
-    'ruamel.yaml.clib', # ruamel.yaml is more relevant and imports with 'ruamel'
 }
 
 
@@ -212,7 +209,6 @@ def get_site_packages()-> dict:
                 'import_name':_get_import_name(dist, pkg_tops),
                 'version':meta['Version'], # required, so always returns
                 'summary':meta['Summary'], # returns none if no entry
-                #'homepage':meta['Home-Page'], # returns None if no entry, although sometimes there is fluff text like 'Unknown'
                 'homepage':_find_website(meta),
                 'description_content_type':_parse_content_type(meta['Description-Content-Type']),
                 'description':meta['Description'],

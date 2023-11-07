@@ -16,7 +16,6 @@ from .cyto_utils import cyto_layout_dropdown
 # body right cyto is the contents of the main body right column when the 
 # Class Explorer tab is selected. Contains and controls the cytoscape graph
 # features.
-
 body_right_cyto = dbc.Container([
         dbc.Row([
             dbc.Col([
@@ -41,7 +40,6 @@ body_right_cyto = dbc.Container([
                                 ),
                                 dmc.Switch(
                                     id=comp_id('cyto-legend-switch', 'cyto', 0),
-                                    #label='Show Legend',
                                     radius='lg',
                                     size='sm',
                                     checked=False,

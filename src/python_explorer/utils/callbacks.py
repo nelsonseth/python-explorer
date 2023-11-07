@@ -1,25 +1,21 @@
 from typing import Any
 
 from dash import callback, Input, Output, State, ctx, no_update, ALL
-import dash_mantine_components as dmc
-import dash_bootstrap_components as dbc
 
 # local
 from .explore import Explore, ExploreFromStatus
 from .envdata import (
     env_std_modules,
-    env_std_wrong_os,
     env_site_packages,
-    all_packages,
 )
 
 # the nightmare that is figuring out relative imports
-import sys
-from pathlib import Path
-sys.path.append(Path(__file__).parent.parent)
+# import sys
+# from pathlib import Path
+# sys.path.append(Path(__file__).parent.parent)
 
 # layouts is two levels up
-from layouts.layout_utils import (
+from python_explorer.layouts.layout_utils import (
     comp_id,
     placeholder_text,
     get_notification,
@@ -34,8 +30,7 @@ from layouts.layout_utils import (
     publish_member_info,
     publish_package_info,
 )
-
-from layouts.cyto_utils import get_cytoscape
+from python_explorer.layouts.cyto_utils import get_cytoscape
 
 
 class ImportedNamespace:
@@ -65,6 +60,7 @@ class ImportedNamespace:
             return self.active[f'{module}']
 
 imports = ImportedNamespace()
+
 
 def _getexplore(status):
     '''Retrieve Explore instance from status.'''
@@ -111,7 +107,7 @@ def package_dropdown_close(n):
         Input(comp_id('p-button', ALL, ALL), 'n_clicks'),
         Input(comp_id('explore-button', 'tabs', 0), 'n_clicks'),
         Input(comp_id('t-button', 'trace', ALL), 'n_clicks'),
-        State(comp_id('packages', 'drawer', 0), 'data'),
+        State(comp_id('packages', 'accordion', 0), 'data'),
         State(comp_id('status', 'app', 0), 'data'),
         State(comp_id('current-member-title', 'tabs', 0), 'children'),
         prevent_initial_call=True,
@@ -153,7 +149,7 @@ def update_explore(n1, n2, n3, packages, status, member):
                 no_update,          
                 [
                     'Import Error.',
-                    f'Not able to access {mod}.'
+                    f'Unable to access {mod}.'
                 ]
             )
 
@@ -219,6 +215,7 @@ def update_explore(n1, n2, n3, packages, status, member):
             '',
             no_update
         )
+
 
 # output filtered list of members based on search settings
 @callback(
@@ -378,6 +375,7 @@ def show_member_info(n1, status, clicked, filt_mems):
             no_update,
             [lexp._error.kind, lexp._error.msg]
         )
+
 
 # create cytoscape graph
 @callback(

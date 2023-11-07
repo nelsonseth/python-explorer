@@ -3,6 +3,7 @@ from typing import Union
 
 from dash import dcc, html
 import dash_cytoscape as cyto
+
 cyto.load_extra_layouts()
 
 # local

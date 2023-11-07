@@ -9,12 +9,12 @@ from dash_iconify import DashIconify
 from pypandoc import convert_text
 
 # the nightmare that is figuring out relative imports
-import sys
-from pathlib import Path
-sys.path.append(Path(__file__).parent.parent)
+# import sys
+# from pathlib import Path
+# sys.path.append(Path(__file__).parent.parent)
 
 # utils is two levels up
-from utils.explore import AttributeDict
+from python_explorer.utils.explore import AttributeDict
 
 # Common Settings--------------------------------------------------------------
 
@@ -86,6 +86,7 @@ def get_package_button_stack(
     package_info: dict,
     group: str
     ) -> dmc.Stack:
+    '''Return stack of package buttons based on group.'''
 
     button_list_group = [b for b in button_list if b.id['group'] == group]
 
@@ -138,6 +139,7 @@ def get_package_accordion(
     std_package_info: dict,
     site_package_info: dict,
     )-> dmc.Accordion:
+    '''Get package accordion structure.'''
 
     button_list = get_package_buttons(packages)
 
@@ -180,14 +182,10 @@ def get_package_accordion(
                         'border-bottom-right-radius':'6px',
                         'border-bottom-left-radius':'6px',
                         'border-top-right-radius':'6px',
-                        #'zIndex':999,
                     },
                 )
             ],
-            value='standard', 
-            style={
-                #'height':'3em',
-            }  
+            value='standard',  
         ),
         dmc.AccordionItem(
             [
@@ -225,25 +223,18 @@ def get_package_accordion(
                         'border-bottom-right-radius':'6px',
                         'border-bottom-left-radius':'6px',
                         'border-top-right-radius':'6px',
-                        #'zIndex':1000,
                     },
                 )
             ],
             value='site',
             style={
-                #'height':'3em',
                 'border-bottom':f'1px solid {ACCORDION_DARK}'
             }   
         ),
         ],
         id=comp_id('p-accordion', 'packages', 0),
-        #variant='filled',
         radius='md',
         style={
-            #'width':'50%',
-            #'border':f'1px solid {BORDER_COLOR}',
-            #'background-color':PAPER_BCOLOR,
-            #'background-image':f'linear-gradient(#bbd4e9 50%, #d6e5f2 50%)',
             'position':'relative',
             'zIndex':999,
         }
@@ -255,6 +246,7 @@ def publish_package_info(
     version: str,
     link: Union[str, None]
     )-> dmc.Stack:
+    '''Return package info stack for page.'''
 
     if link == None or link == 'UNKNOWN' or link == '':
         href = dmc.Text(
@@ -305,15 +297,15 @@ def publish_package_info(
                 },               
             ),
             href,
+            ],
+            align='center',
+            position='left',
+            noWrap=True,
+            spacing=4,
+        )
         ],
-        align='center',
-        position='left',
-        noWrap=True,
-        spacing=4,
+        spacing=6,
     )
-    ],
-    spacing=6,
-)
 
 
 def get_trace_buttons(
@@ -391,6 +383,8 @@ def get_button_stack(
 
 
 def get_trace_group(tracebuttons: list)-> dmc.Group:
+    '''Get trace button group.'''
+
     tlist = [dmc.Text(
             'You are exploring:  ',
             italic=True,

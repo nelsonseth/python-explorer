@@ -1,12 +1,12 @@
+import webbrowser
 
 from dash import Dash, html
-                 
-# import dash_bootstrap_components as dbc
 import dash_mantine_components as dmc
+import dash_bootstrap_components as dbc
 
 # locals
-from layouts import comp_id, page_layout, stores
-from utils import callbacks
+from python_explorer.layouts import comp_id, page_layout, stores
+from python_explorer.utils import callbacks
 
 def serve_layout():
     return dmc.NotificationsProvider(
@@ -32,7 +32,7 @@ def serve_layout():
 # below.
 app = Dash(
     __name__,
-    #external_stylesheets=[dbc.themes.BOOTSTRAP],
+    external_stylesheets=[dbc.themes.BOOTSTRAP],
     title='python explorer',
     suppress_callback_exceptions=True,
 )  
@@ -41,5 +41,10 @@ server = app.server
 
 app.layout = serve_layout()
 
+def run_app():
+    webbrowser.open('http://127.0.0.1:8050/')
+    app.run()
+
 if __name__ == '__main__':
-    app.run(debug=True)
+    webbrowser.open('http://127.0.0.1:8050/')
+    app.run()

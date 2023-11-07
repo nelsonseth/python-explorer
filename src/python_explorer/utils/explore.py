@@ -30,7 +30,7 @@ __author__ = ('Seth M. Nelson <github.com/nelsonseth>')
 import inspect
 import pkgutil
 import sys
-from warnings import warn
+# from warnings import warn
 from typing import Union, Any
 
 #------------------------------------------------------------------------------

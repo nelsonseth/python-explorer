@@ -1,6 +1,5 @@
 
 import dash_mantine_components as dmc
-import dash_bootstrap_components as dbc
 
 # local
 from .layout_utils import (

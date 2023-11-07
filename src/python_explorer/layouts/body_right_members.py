@@ -25,7 +25,6 @@ explore_button = dmc.Button(
 # body right member info is the contents of main body right column when the
 # Member Info tab is selected. Contains and controls the member info, member
 # signature, member docstring, and the explore more button
-
 body_right_member_info = dbc.Container([
         dbc.Row([
             dbc.Col([

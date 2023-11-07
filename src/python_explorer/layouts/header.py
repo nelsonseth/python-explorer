@@ -2,7 +2,6 @@
 import dash_mantine_components as dmc
 import dash_bootstrap_components as dbc
 from dash_iconify import DashIconify
-from dash import html
 
 # local
 from .layout_utils import (
@@ -15,14 +14,13 @@ from .layout_utils import (
 )
 
 # the nightmare that is figuring out relative imports
-import sys
-from pathlib import Path
-sys.path.append(Path(__file__).parent.parent)
+# import sys
+# from pathlib import Path
+# sys.path.append(Path(__file__).parent.parent)
 
-from utils.envdata import (
+from python_explorer.utils.envdata import (
     env_site_packages,
     env_std_modules,
-    env_std_wrong_os,
     all_packages,
 )
 
@@ -38,7 +36,6 @@ header_content = [
             'height':'100%',
             'margin':'0',
             'padding':'0.5em 0.5em 0 0.5em',
-            #'border':'1px solid black',
         }
     ),
     dbc.Col([
@@ -50,7 +47,6 @@ header_content = [
                 'width':'100%',
                 'margin':'0',
                 'padding':'0.5em',
-                #'border':'1px solid black',
             }
         ),
         dbc.Row(
@@ -61,7 +57,6 @@ header_content = [
                 'width':'100%',
                 'margin':'0',
                 'padding':'0.25em 0 0 0.5em',
-                #'border':'1px solid black',
             }
         ),
         ],
@@ -70,7 +65,6 @@ header_content = [
             'height':'100%',
             'margin':'0',
             'padding':'0 0 0 0',
-            #'border':'1px solid black',
         },
     ),
     dbc.Col(
@@ -122,7 +116,6 @@ header_content = [
                         }
                     ),
                     href='https://github.com/nelsonseth/python-explorer',
-                    # variant = 'light',
                     style={
                         'height':'2.3em',
                         'width':'2.3em',
@@ -132,8 +125,6 @@ header_content = [
                         'border-top-right-radius':'8px',
                         'border-bottom-left-radius':'8px',
                         'border-bottom-right-radius':'8px',
-                        #'border':'1px solid black',
-                        #'background-color':'transparent',
                         'background-color':HEADER_COLOR_LIGHT,
                     }
                 ),
@@ -142,10 +133,8 @@ header_content = [
                 spacing=6,
             ),
             ],
-            #align='flex-end',
             justify='space-between',
             style={
-                #'border':'1px solid black',
                 'height':"100%"
             },
         ),
@@ -154,8 +143,7 @@ header_content = [
             'height':'100%',
             'margin':'0',
             'padding':'0.25em 1em 0.5em 0',
-            'position':'relative', 
-            #'border':'1px solid black', 
+            'position':'relative',  
         }
     ),
 ]
