@@ -1,8 +1,10 @@
 import webbrowser
+from pathlib import Path
 
 from dash import Dash, html
 import dash_mantine_components as dmc
 import dash_bootstrap_components as dbc
+from waitress import serve
 
 # locals
 from python_explorer.layouts import comp_id, page_layout, stores
@@ -27,24 +29,27 @@ def serve_layout():
         autoClose=2500,
     )
 
-# Static external bootstrap stylesheet located in /assets folder.
-# This is why `external_stylesheets=[dbc.themes.BOOTSTRAP]` is not needed
-# below.
 app = Dash(
     __name__,
-    external_stylesheets=[dbc.themes.BOOTSTRAP],
+    assets_folder=Path(__file__).parent.parent/'assets',
     title='python explorer',
     suppress_callback_exceptions=True,
 )  
 
-server = app.server   
-
 app.layout = serve_layout()
 
-def run_app():
-    webbrowser.open('http://127.0.0.1:8050/')
-    app.run()
+server = app.server   
+
+def run_app(
+    host: str = '127.0.0.1',
+    port: str = '8080',
+    threads = 8,
+):
+    site = f'http://{host}:{port}/'
+    webbrowser.open(site)
+    serve(server, host=host, port=port, threads=threads)
+
 
 if __name__ == '__main__':
-    webbrowser.open('http://127.0.0.1:8050/')
-    app.run()
+    webbrowser.open('http://127.0.0.1:8080/')
+    serve(server, host='127.0.0.1', port='8080', threads=8)

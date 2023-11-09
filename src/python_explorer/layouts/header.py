@@ -13,17 +13,11 @@ from .layout_utils import (
     HEADER_COLOR_LIGHT,
 )
 
-# the nightmare that is figuring out relative imports
-# import sys
-# from pathlib import Path
-# sys.path.append(Path(__file__).parent.parent)
-
 from python_explorer.utils.envdata import (
     env_site_packages,
     env_std_modules,
     all_packages,
 )
-
 
 # 'border':f'1px solid {BORDER_COLOR}',
 

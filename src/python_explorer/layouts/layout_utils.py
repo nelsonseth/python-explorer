@@ -8,12 +8,6 @@ from dash_extensions import Purify
 from dash_iconify import DashIconify
 from pypandoc import convert_text
 
-# the nightmare that is figuring out relative imports
-# import sys
-# from pathlib import Path
-# sys.path.append(Path(__file__).parent.parent)
-
-# utils is two levels up
 from python_explorer.utils.explore import AttributeDict
 
 # Common Settings--------------------------------------------------------------

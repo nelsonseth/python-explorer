@@ -3,13 +3,6 @@ from dash import dcc, html
 
 # local
 from .layout_utils import comp_id
-
-# the nightmare that is figuring out relative imports
-# import sys
-# from pathlib import Path
-# sys.path.append(Path(__file__).parent.parent)
-
-# utils is two levels up
 from python_explorer.utils.envdata import all_packages
 
 packs = [p[1] for p in all_packages]

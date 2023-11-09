@@ -9,12 +9,6 @@ from .envdata import (
     env_site_packages,
 )
 
-# the nightmare that is figuring out relative imports
-# import sys
-# from pathlib import Path
-# sys.path.append(Path(__file__).parent.parent)
-
-# layouts is two levels up
 from python_explorer.layouts.layout_utils import (
     comp_id,
     placeholder_text,
