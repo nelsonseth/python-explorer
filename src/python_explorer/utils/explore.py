@@ -127,36 +127,39 @@ def getmembers_categorized(obj: Any)-> tuple[dict, set]:
         # eval string built from obj.itemname
         itemstr = f'{objstr}.{name}'
 
-        if hasattr(obj, name):
-            # identify imported modules if obj is module.
-            if inspect.ismodule(eval(itemstr)):
-                modules.append(name)
+        try:
+            if hasattr(obj, name):
+                # identify imported modules if obj is module.
+                if inspect.ismodule(eval(itemstr)):
+                    modules.append(name)
 
-            # identify any included classes.
-            elif inspect.isclass(eval(itemstr)):
-                classes.append(name)
+                # identify any included classes.
+                elif inspect.isclass(eval(itemstr)):
+                    classes.append(name)
 
-            # identify included functions.
-            # The function inspect.isroutine() covers:
-            #   - builtin function types
-            #   - user function types
-            #   - methods
-            #   - method descriptors
-            # NOTE: functions created by user-defined classes are not covered here.
-            # (they just end up in others). Not sure how to deal with that yet.
-            # Example: numpy's ufunc functions. TODO for later.
-            elif inspect.isroutine(eval(itemstr)):
-                functions.append(name)
+                # identify included functions.
+                # The function inspect.isroutine() covers:
+                #   - builtin function types
+                #   - user function types
+                #   - methods
+                #   - method descriptors
+                # NOTE: functions created by user-defined classes are not covered here.
+                # (they just end up in others). Not sure how to deal with that yet.
+                # Example: numpy's ufunc functions. TODO for later.
+                elif inspect.isroutine(eval(itemstr)):
+                    functions.append(name)
 
-            # identify any included properties
-            elif isproperty(eval(itemstr)):
-                properties.append(name)
+                # identify any included properties
+                elif isproperty(eval(itemstr)):
+                    properties.append(name)
 
-            # bin anything else into 'others' for now.
+                # bin anything else into 'others' for now.
+                else:
+                    others.append(name)
             else:
-                others.append(name)
-        else:
-            modules.append(name)
+                modules.append(name)
+        except:
+            pass
         
     # Return dictionary of sorted name lists.  
     out_dict = AttributeDict(

@@ -48,8 +48,3 @@ def run_app(
     site = f'http://{host}:{port}/'
     webbrowser.open(site)
     serve(server, host=host, port=port, threads=threads)
-
-
-if __name__ == '__main__':
-    webbrowser.open('http://127.0.0.1:8080/')
-    serve(server, host='127.0.0.1', port='8080', threads=8)
