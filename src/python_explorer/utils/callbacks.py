@@ -1,3 +1,5 @@
+'''callback definitions for Dash app.'''
+
 from typing import Any
 
 from dash import callback, Input, Output, State, ctx, no_update, ALL
@@ -56,7 +58,7 @@ class ImportedNamespace:
 imports = ImportedNamespace()
 
 
-def _getexplore(status):
+def getexplore(status):
     '''Retrieve Explore instance from status.'''
     root = imports.get_module(status['history'][0])
     loc_explore = ExploreFromStatus(root, status)
@@ -159,7 +161,7 @@ def update_explore(n1, n2, n3, packages, status, member):
     
     elif id == 'explore-button':
 
-        lexp = _getexplore(status)
+        lexp = getexplore(status)
         ok = lexp.stepin(member)
 
         if ok == True:
@@ -196,7 +198,7 @@ def update_explore(n1, n2, n3, packages, status, member):
         index = ctx.triggered_id.index
         levels = len(status['history']) - index - 1
 
-        lexp = _getexplore(status)
+        lexp = getexplore(status)
         lexp.stepout(levels)
         lheritage = lexp.get_class_heritage(listify=True)
 
@@ -321,7 +323,7 @@ def show_navigation(status):
 )
 def show_member_info(n1, status, clicked, filt_mems):
     
-    lexp = _getexplore(status)
+    lexp = getexplore(status)
 
     if clicked[0] in ['explore', 'trace', 'package']:
 

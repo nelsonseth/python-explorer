@@ -1,13 +1,4 @@
-
-__all__ = [
-    'env_std_modules',
-    'env_std_wrong_os',
-    'env_site_packages',
-    'all_packages',
-    'get_site_packages',
-    'packages_distributions_reverse',
-    'PYVERSION',
-]
+'''Retrieve relevant packages and info from environment.'''
 
 import sys
 import re
@@ -16,7 +7,7 @@ from importlib.metadata import Distribution, packages_distributions
 
 # Standard Modules-------------------------------------------------------------
 
-_std_modules_exclude = [
+std_modules_exclude = [
     # extra
     'antigravity',
     'this',
@@ -28,22 +19,22 @@ _std_modules_exclude = [
     'smtpd',
 ]
 
-_std_unavailable = []
-_std_valid = []
+std_unavailable = []
+std_valid = []
 
 for m in sys.stdlib_module_names:
-    if m not in _std_modules_exclude and not m.startswith('_'):
+    if m not in std_modules_exclude and not m.startswith('_'):
         try:
             exec(f'import {m}')
-            _std_valid.append(m)
+            std_valid.append(m)
         except:
-            _std_unavailable.append(m)
+            std_unavailable.append(m)
 
 
 PYVERSION = f'{sys.version_info.major}.{sys.version_info.minor}'
 
 
-def _get_std_modules(valid_list: list)-> dict:
+def get_std_modules(valid_list: list)-> dict:
     pkgs = {}
     for m in valid_list:
         try:
@@ -59,14 +50,14 @@ def _get_std_modules(valid_list: list)-> dict:
     
     return pkgs
 
-env_std_modules = _get_std_modules(_std_valid)
-env_std_wrong_os = _std_unavailable
+env_std_modules = get_std_modules(std_valid)
+env_std_wrong_os = std_unavailable
 
 
 # Site-Packages----------------------------------------------------------------
 
 # List started from pip code. I added in other problematic pkgs as well.
-_pkgs_exclude = {
+pkgs_exclude = {
     'python', # from pip exclusion
     'wsgiref', # from pip exclusion
     'argparse', # cli functions, from pip exclusion but this will be included in std_module list
@@ -85,7 +76,7 @@ _pkgs_exclude = {
 
 
 # this wasn't publically available within Distribution() methods. Not sure why.
-def _normalize_name(name):
+def normalize_name(name):
     """
     PEP 503 normalization plus dashes as underscores.
     """
@@ -133,7 +124,7 @@ def _get_import_name(dist: Distribution, pkg_tops: dict)-> Union[str, None]:
     '''Attempt to get the best import name for the package. Why there isn't a 
     standard logic between package names and import names is beyond me.'''
     
-    normal_name = _normalize_name(dist.name)
+    normal_name = normalize_name(dist.name)
     
     if dist.name in pkg_tops.keys():
         names = pkg_tops[dist.name]
@@ -199,7 +190,7 @@ def get_site_packages()-> dict:
     pkg_tops = packages_distributions_reverse()
 
     for dist in Distribution.discover():
-        if dist.name in _pkgs_exclude:
+        if dist.name in pkgs_exclude:
             pass
         else:
             meta = dist.metadata
@@ -218,7 +209,7 @@ def get_site_packages()-> dict:
 env_site_packages = get_site_packages()
 
 
-def get_packages(standards: dict, site: dict):
+def list_all_packages(standards: dict, site: dict)-> list:
     
     all_packages = []
     
@@ -235,4 +226,4 @@ def get_packages(standards: dict, site: dict):
 
     return all_packages
 
-all_packages = get_packages(env_std_modules, env_site_packages)
+all_packages = list_all_packages(env_std_modules, env_site_packages)

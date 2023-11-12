@@ -85,7 +85,7 @@ my_stylesheet = [
 ]
 
 # generate node definitions from class hierarchy
-def _create_cy_nodes(
+def create_cy_nodes(
     node_tuples: Union[list, set],
     members: list,
     for_legend: bool = False,
@@ -140,7 +140,7 @@ def _create_cy_nodes(
     return cy_nodes
 
 # generate edge definitions from class hierarchy information
-def _create_cy_edges(heritage_dict: dict)-> list:
+def create_cy_edges(heritage_dict: dict)-> list:
     cy_edges = []
     for k in list(heritage_dict.keys()):
         for c in heritage_dict[k]:
@@ -183,8 +183,8 @@ cyto_layout_dropdown = dcc.Dropdown(
     }
 )
 
-legend_cy_nodes = _create_cy_nodes(legend_nodes, legend_members, for_legend=True)
-legend_cy_edges = _create_cy_edges(legend_hierarchy)
+legend_cy_nodes = create_cy_nodes(legend_nodes, legend_members, for_legend=True)
+legend_cy_edges = create_cy_edges(legend_hierarchy)
 
 
 # called from callback to generate current cytoscape layout output
@@ -193,8 +193,8 @@ def get_cytoscape(heritage: list, classes: list)-> list:
     nodes = heritage[0]
     heritage_info = heritage[1]
 
-    cy_nodes = _create_cy_nodes(nodes, classes)
-    cy_edges = _create_cy_edges(heritage_info)
+    cy_nodes = create_cy_nodes(nodes, classes)
+    cy_edges = create_cy_edges(heritage_info)
 
     return [
         cyto.Cytoscape(

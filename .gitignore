@@ -6,7 +6,7 @@ src/python_explorer/utils/__pycache__/
 src/python_explorer/utils/testpit.py
 src/python_explorer/assets/__pycache__/
 src/python_explorer/testpit.py
-tests/
+
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
