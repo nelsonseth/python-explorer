@@ -1,5 +1,7 @@
 <h1 style="text-align: center">Python Explorer</h1>
 
+[![PyPI version](https://badge.fury.io/py/python-explorer.svg)](https://badge.fury.io/py/python-explorer)
+
 <p style="text-align: center; font-style: italic">A Python environment exploration interface.</p>
 
 Written 100% in Python and renders in your browser using [Dash](https://dash.plotly.com).
