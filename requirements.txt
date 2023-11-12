@@ -1,4 +1,5 @@
 python-explorer==0.1.0
+gunicorn
 numpy
 scipy
 pandas
