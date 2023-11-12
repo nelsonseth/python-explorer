@@ -1,12 +1,12 @@
 # custom things
-src/__pycache__/
-src/layouts/__pycache__/
-src/layouts/testpit.py
-src/utils/__pycache__/
-src/utils/testpit.py
-src/assets/__pycache__/
-src/testpit.py
-tests/
+src/python_explorer/__pycache__/
+src/python_explorer/layouts/__pycache__/
+src/python_explorer/layouts/testpit.py
+src/python_explorer/utils/__pycache__/
+src/python_explorer/utils/testpit.py
+src/python_explorer/assets/__pycache__/
+src/python_explorer/testpit.py
+
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
