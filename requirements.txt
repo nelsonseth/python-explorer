@@ -1,0 +1,7 @@
+python-explorer==0.1.0
+numpy
+scipy
+pandas
+seaborn
+matplotlib
+scikit-learn
