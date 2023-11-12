@@ -24,4 +24,4 @@ from .utils.app import run_app, DEFAULT_HOST, DEFAULT_PORT, DEFAULT_THREADS
 
 __author__ = ('Seth M. Nelson <github.com/nelsonseth>')
 
-__version__ = '0.1.8'
+__version__ = '0.1.0'
