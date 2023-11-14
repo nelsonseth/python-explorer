@@ -53,64 +53,29 @@ Options:
 
 The cli command will launch python-explorer in your default browser. The package listing in the top left dropdowns are derived from the environment in which python-explorer was installed. Click on any of the package listings to access its members and start exploring the information. If a package is not accessible for some reason, a notification alert will display in the upper right portion of the window.
 
-<img 
-    style="display: block; 
-           margin-left: auto;
-           margin-right: auto;
-           width: 80%;"
-    src="docs/GettingStarted.gif" 
-    alt="docgif">
-</img>
+![](docs/GettingStarted.gif)
 
 ### Explore More
 The green **Explore More** button (center top of Member Information tab) allows you to step into certain objects such as modules or classes. You can keep going further into a particular space until it recognizes that there is nothing further to explore.
 
-<img 
-    style="display: block; 
-           margin-left: auto;
-           margin-right: auto;
-           width: 80%;"
-    src="docs/ExploreMore.gif" 
-    alt="docgif">
-</img>
+![](docs/ExploreMore.gif)
 
 ### Navigation
 As you explore objects, the tool will keep track of where you are in the navigation listing (top of page). Just click one of the previous object buttons to return to that state or to view the member information (if any) of the current explored space (right-most button).
 
-<img 
-    style="display: block; 
-           margin-left: auto;
-           margin-right: auto;
-           width: 80%;"
-    src="docs/Navigation.gif" 
-    alt="docgif">
-</img>
+![](docs/Navigation.gif)
 
 ### Search Members
 For a given space, the search input allows you to filter the members by members that either start with or contain the input text. This helps to narrow down options or helps you find something quicker if you know the name already. Additionally, a toggle located near the bottom left of the page allows to include private members in the listings. Traditionally, these are object names that start with a single underscore ( ```_foo``` ).
 
-<img 
-    style="display: block; 
-           margin-left: auto;
-           margin-right: auto;
-           width: 80%;"
-    src="docs/Search.gif" 
-    alt="docgif">
-</img>
+![](docs/Search.gif)
 
 ### Class Explorer
 The Class Explorer tab opens up a cytoscape graph of the current classes for a given space and their associated relationships. The graph includes the super classes of the given list and so may include classes that are outside the current explored namespace. The layout dropdown menu lets you choose different layout options or you can drag and organize the results as you please.
 
 Both the Member Information tab and the Class Explorer tab are active in the background so feel free to switch back and forth between them. NOTE: the search feature and private member toggle do not currently affect the cytoscape output.
 
-<img 
-    style="display: block; 
-           margin-left: auto;
-           margin-right: auto;
-           width: 80%;"
-    src="docs/ClassExplorer.gif" 
-    alt="docgif">
-</img>
+![](docs/ClassExplorer.gif)
 
 Future
 ------
