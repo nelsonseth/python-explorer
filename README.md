@@ -6,8 +6,6 @@
 
 Written 100% in Python and renders in your browser using [Dash](https://dash.plotly.com).
 
-An online demo version can be accessed here: [python-explorer demo](https://python-explorer.onrender.com/).
-
 Motivation
 ---------- 
 After I was introduced to Python by a colleague, I found myself constantly asking how he knew the name of a given ```object``` and how do I know what other items or methods are available for use? The obvious resource for answering these questions is to read the docs. However, even the best examples of documentation can be cumbersome to navigate and, oftentimes, still left me confused as to how items were related or where they came from. Additionally, the only reason we are generally aware about a certain class/function/method is because we had a direct need for it and googled a similar example. While very helpful in the moment, this can result in a lack of awareness for other potentially useful portions of the code or package.
